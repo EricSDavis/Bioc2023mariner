@@ -1,16 +1,14 @@
-Package: BuildABiocWorkshop
-Title: Bioconductor or R Workshop Template and Github Actions
-Version: 2.0.0
+Package: Bioc2023mariner
+Title: Mariner: Explore the Hi-C
+Version: 1.0.0
 Authors@R: 
-    person(given = "Sean",
+    person(given = "Eric",
            family = "Davis",
            role = c("aut", "cre"),
-           email = "seandavi@gmail.com",
-           comment = c(ORCID = "0000-0002-8991-6458"))
-Description: This package serves as a template for using github actions to 
-    prepare a Bioconductor Workshop package for use. In particular,
-    a pkgdown website and docker image are generated based on workflow 
-    settings. 
+           email = "ericscottdavis@outlook.com",
+           comment = c(ORCID = "0000-0003-4051-3217"))
+Description: BioC2023 workshop using mariner and
+  plotgardener for analyzing and visualizing Hi-C genomic data. 
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -22,7 +20,7 @@ Suggests:
     knitr,
     rmarkdown,
     pkgdown
-URL: https://seandavi.github.io/BuildABiocWorkshop/
-BugReports: https://github.com/seandavi/BuildABiocWorkshop/issues/new/choose
+URL: https://ericsdavis.github.io/Bioc2023mariner/
+BugReports: https://github.com/esdavis/Bioc2023mariner/issues/new/choose
 VignetteBuilder: knitr
-DockerImage: ghcr.io/seandavi/buildabiocworkshop:latest
+DockerImage: ghcr.io/ericsdavis/bioc2023mariner:latest
