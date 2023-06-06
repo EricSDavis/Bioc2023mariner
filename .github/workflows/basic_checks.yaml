@@ -5,6 +5,9 @@ on: [push, pull_request]
 env:
   cache-version: v1
 
+permissions:
+  contents: write
+
 jobs:
   r-build-and-check:
     runs-on: ubuntu-latest
