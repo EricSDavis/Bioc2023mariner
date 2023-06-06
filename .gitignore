@@ -1,5 +1,6 @@
 inst/doc
 inst/extdata
+docs
 data
 *~
 .Rproj.user

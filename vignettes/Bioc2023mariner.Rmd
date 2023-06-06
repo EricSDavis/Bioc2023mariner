@@ -1,0 +1,168 @@
+---
+title: "Mariner: Explore the Hi-Cs"
+author: "Eric S. Davis, Sarah M. Parker, Manjari Kiran, \
+Nicole Kramer, Douglas H. Phanstiel"
+date: '`r Sys.Date()`'
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Mariner: Explore the Hi-Cs}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+## Overview
+
+### Description
+
+TODO Add description of workshop here...
+
+
+### Pre-requisites
+
+List any workshop prerequisites, for example:
+
+* Basic knowledge of R syntax
+* Familiarity with the `GenomicRanges` and `InteractionSet` classes
+
+### Optional background reading
+
+* Biological background
+  * TODO Hi-C background
+  * TODO MEGA paper
+* Other _Bioconductor_ packages
+  * TODO `InteractionSet`
+  * TODO `DelayedArray`
+  * TODO `DESeq2`
+  * TODO `plotgardener`
+
+### Participation
+
+The format is lecture + lab, with time for data exploration.
+
+### _R_ / _Bioconductor_ packages used
+
+* mariner
+* DESeq2
+* plotgardener
+
+### Time outline
+
+90-minute workshop:
+
+| Activity                            | Time |
+|-------------------------------------|------|
+| Overview of Hi-C data               | 10m  |
+| Workshop datasets                   |  5m  |
+| Differential analysis with `DESeq2` | 25m  |
+| Aggregating interactions            | 25m  |
+| Visualization with `plotgardener`   | 25m  |
+
+
+### Workshop goals and objectives
+
+### Learning goals
+
+Some examples:
+
+* Understand how to work with interaction data in R.
+* Learn which `mariner` functions to use for extracting
+Hi-C data.
+* How to use accessors to get information from `mariner`
+objects.
+* Integrating `mariner` with `plotgardener` for 
+programmatically visualizing genomic data.
+
+### Learning objectives
+
+* Conduct differential interaction analysis with `mariner` and `DESeq2`.
+* Make aggregate plots with `mariner`.
+* Visualize aggregate plots and genomic regions with `plotgardener`.
+
+## Overview of Hi-C data
+
+TODO
+
+Topics to cover:
+
+* Terminology (loops, anchors, pixels, resolution, diagonal)
+* How to read a Hi-C map
+
+## Workshop datasets
+
+TODO
+
+Topics to cover:
+
+* Biological question (megakaryocyte differentiation)
+* Hi-C files & replicate structure
+* Loop & TAD files
+* ATAC peaks & signal tracks
+
+## Differential analysis with `DESeq2`
+
+TODO
+
+Topics to cover:
+
+* Reading in and merging loops
+  * `as_ginteractions()`
+  * `binPairs()` to resolution
+  * `mergePairs()`
+  * _de_ _novo_ loops with `subsetBySource()`
+  * Exercise: find transient loops
+  * Accessing cluster data
+* Extracting pixels
+  * `InteractionMatrix` object
+  * Accessing counts
+  * Building `colData`
+  * Differential analysis with `DESeq2`
+
+## Aggregating interactions
+
+TODO
+
+Topics to cover:
+  
+* Extracting Hi-C submatrices
+  * `pixelsToMatrices()`
+  * `pullHicMatrices()`
+  * Accessing count matrices
+* Aggregating with `aggHicMatrices()`
+  * In blocks and/or in parallel
+  * APA analysis
+    * `removeShortPairs()`
+* Extracting rectangular & irregular submatrices
+  * `regularize()`
+  * ATA analysis
+* Visualizing
+  * `plotMatrix()` for APAs
+  * `plotMatrix()` for ATAs
+  * `plotMatrix()` for saddle plots
+
+## Visualizing with `plotgardener`
+
+TODO
+
+Topics to cover:
+
+* Philosophy of `plotgardener`
+* Plotting a Hi-C plot
+* Adding signal tracks
+* Visualizing multiple APA plots
+
+
+
+
+
+
+
+
