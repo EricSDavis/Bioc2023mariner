@@ -2,10 +2,9 @@ pandoc: 2.19.2
 pkgdown: 2.0.7
 pkgdown_sha: ~
 articles:
-  HOWTO_BUILD_WORKSHOP: HOWTO_BUILD_WORKSHOP.html
-  workshop_example: workshop_example.html
-last_built: 2023-06-06T19:49Z
+  Bioc2023mariner: Bioc2023mariner.html
+last_built: 2023-06-06T22:32Z
 urls:
-  reference: https://seandavi.github.io/BuildABiocWorkshop/reference
-  article: https://seandavi.github.io/BuildABiocWorkshop/articles
+  reference: https://ericsdavis.github.io/Bioc2023mariner/reference
+  article: https://ericsdavis.github.io/Bioc2023mariner/articles
 
