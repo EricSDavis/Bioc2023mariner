@@ -53,7 +53,7 @@ jobs:
       - name: Check
         env:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false
-        run: rcmdcheck::rcmdcheck(args = c("--no-manual", "--with-keep.source", "--no-build-vignettes"), error_on = "warning", check_dir = "check")
+        run: devtools::check(".")
         shell: Rscript {0}
       
 
