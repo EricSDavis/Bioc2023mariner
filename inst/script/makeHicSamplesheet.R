@@ -3,7 +3,7 @@
 
 ## Paths to .hic files
 hicFiles <- 
-  list.files("data/hic", full.names=TRUE) |>
+  list.files("vignettes/data/hic", full.names=TRUE) |>
   normalizePath()
 
 ## Split by filename & format as data.frame
@@ -34,6 +34,6 @@ samplesheet <- cbind(info, samples, filepath)
 ## Write out results
 write.table(
   x=samplesheet,
-  file="/home/rstudio/data/samples/samplesheet.txt",
+  file="/home/rstudio/vignettes/data/samples/samplesheet.txt",
   sep="\t"
 )
