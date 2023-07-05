@@ -697,11 +697,11 @@ gained_trt_tads <- pileupDomains(
 
 ## Find common scale for gained/lost
 gq <- quantile(c(gained_ctr_tads, gained_trt_tads), 0.90)
-gained_scale <- c(0, gq)
+gained_tad_scale <- c(0, gq)
 
 ## Visualize
-plotMatrix(gained_ctr_tads, zrange=gained_scale)
-plotMatrix(gained_trt_tads, zrange=gained_scale)
+plotMatrix(gained_ctr_tads, zrange=gained_tad_scale)
+plotMatrix(gained_trt_tads, zrange=gained_tad_scale)
 ```
 
 ## Visualizing with `plotgardener` <a id="vis_with_pg" />
