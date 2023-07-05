@@ -271,7 +271,7 @@ Hi-C sample. First we read in the sample sheet containing
 Hi-C sample information and file paths each `.hic` file:
 
 ```{r}
-samples <- read.table("data/samples/samplesheet.txt", colClasses="factor")
+samples <- read.table("data/samples/samplesheet.txt", header=TRUE, colClasses="factor")
 samples <- as(samples, "DataFrame")
 samples
 ```
