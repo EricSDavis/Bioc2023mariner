@@ -50,7 +50,6 @@ jobs:
         shell: Rscript {0}
 
       - name: Check
-        if: ${{ false }}
         env:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false
         run: rcmdcheck::rcmdcheck(args = c("--no-manual", "--with-keep.source", "--no-build-vignettes"), error_on = "warning", check_dir = "check")
