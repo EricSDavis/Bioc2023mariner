@@ -70,7 +70,7 @@
                         <h4 data-toc-skip class="author">Eric S. Davis,
 Sarah M. Parker, Manjari Kiran, Nicole Kramer, Douglas H. Phanstiel</h4>
             
-            <h4 data-toc-skip class="date">2023-06-06</h4>
+            <h4 data-toc-skip class="date">2023-07-06</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/esdavis/Bioc2023mariner/blob/HEAD/vignettes/Bioc2023mariner.Rmd" class="external-link"><code>vignettes/Bioc2023mariner.Rmd</code></a></small>
       <div class="hidden name"><code>Bioc2023mariner.Rmd</code></div>
@@ -226,89 +226,1217 @@ and <code>DESeq2</code>.</li>
 <div class="section level2">
 <h2 id="differential-analysis-with-deseq2">Differential analysis with <code>DESeq2</code><a class="anchor" aria-label="anchor" href="#differential-analysis-with-deseq2"></a>
 </h2>
-<p>TODO</p>
-<p>Topics to cover:</p>
-<ul>
-<li>Reading in and merging loops
-<ul>
-<li><code>as_ginteractions()</code></li>
-<li>
-<code>binPairs()</code> to resolution</li>
-<li><code>mergePairs()</code></li>
-<li>
-<em>de</em> <em>novo</em> loops with
-<code>subsetBySource()</code>
-</li>
-<li>Exercise: find transient loops</li>
-<li>Accessing cluster data</li>
-</ul>
-</li>
-<li>Extracting pixels
-<ul>
-<li>
-<code>InteractionMatrix</code> object</li>
-<li>Accessing counts</li>
-<li>Building <code>colData</code>
-</li>
-<li>Differential analysis with <code>DESeq2</code>
-</li>
-</ul>
-</li>
-</ul>
+<p>In this section we will use <code>DESeq2</code> and
+<code>mariner</code> to identify differential loops between K562 cells
+treated with PMA for 0 or 72 hours.</p>
+<div class="section level3">
+<h3 id="clustering-and-merging-loops">Clustering and merging loops<a class="anchor" aria-label="anchor" href="#clustering-and-merging-loops"></a>
+</h3>
+<p>The first step in this analysis is to read in and combine loop calls
+for K562 cells treated for 0, 6, or 72 hours. Due to technical and
+biological variability, loop callers can identify slightly different
+pixels as loops in different datasets. Sometimes this represents a true
+biological shift in the position of the loop anchors, but more often is
+due to noise and technical variability. Furthermore, testing these
+redundant interactions reduces our power to identify true differences in
+looping.</p>
+<p><img src="img/cluster_merge.png" width="75%" style="display: block; margin: auto;"></p>
+<p>To combat this effect, we can use <code>mariner</code> functions to
+cluster then combine loops between conditions. First, we start by
+reading in BEDPE-formatted loops, and converting them to
+<code>GInteractions</code> objects.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ericscottdavis.com/mariner/" class="external-link">mariner</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Read in 3 loop files as a list of GInteractions objects</span></span>
+<span><span class="va">loopList</span> <span class="op">&lt;-</span> </span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="st">"data/loops"</span>, full.names<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">read.table</span>, header<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">as_ginteractions</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">loopList</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0hr"</span>, <span class="st">"6hr"</span>, <span class="st">"72hr"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Show list of GInteractions</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">loopList</span>, <span class="va">summary</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $`0hr`</span></span>
+<span><span class="co">#&gt; [1] "GInteractions object of length 1157 with 9 metadata columns"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`6hr`</span></span>
+<span><span class="co">#&gt; [1] "GInteractions object of length 1083 with 9 metadata columns"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`72hr`</span></span>
+<span><span class="co">#&gt; [1] "GInteractions object of length 1468 with 9 metadata columns"</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">loopList</span><span class="op">[[</span><span class="st">"0hr"</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="co">#&gt; GInteractions object with 1157 interactions and 9 metadata columns:</span></span>
+<span><span class="co">#&gt;          seqnames1             ranges1     seqnames2             ranges2 |</span></span>
+<span><span class="co">#&gt;              &lt;Rle&gt;           &lt;IRanges&gt;         &lt;Rle&gt;           &lt;IRanges&gt; |</span></span>
+<span><span class="co">#&gt;      [1]      chr1 178540000-178545000 ---      chr1 179000000-179005000 |</span></span>
+<span><span class="co">#&gt;      [2]      chr1   47175000-47180000 ---      chr1   47705000-47710000 |</span></span>
+<span><span class="co">#&gt;      [3]      chr1 100275000-100280000 ---      chr1 100345000-100350000 |</span></span>
+<span><span class="co">#&gt;      [4]      chr1 111030000-111035000 ---      chr1 111390000-111395000 |</span></span>
+<span><span class="co">#&gt;      [5]      chr1 172740000-172745000 ---      chr1 173415000-173420000 |</span></span>
+<span><span class="co">#&gt;      ...       ...                 ... ...       ...                 ... .</span></span>
+<span><span class="co">#&gt;   [1153]      chr1 152050000-152055000 ---      chr1 152185000-152190000 |</span></span>
+<span><span class="co">#&gt;   [1154]      chr1 198095000-198100000 ---      chr1 198685000-198690000 |</span></span>
+<span><span class="co">#&gt;   [1155]      chr1 174415000-174420000 ---      chr1 174720000-174725000 |</span></span>
+<span><span class="co">#&gt;   [1156]      chr1 176560000-176565000 ---      chr1 176880000-176885000 |</span></span>
+<span><span class="co">#&gt;   [1157]      chr1   64680000-64685000 ---      chr1   65035000-65040000 |</span></span>
+<span><span class="co">#&gt;                color APScoreAvg ProbabilityofEnrichment RegAPScoreAvg</span></span>
+<span><span class="co">#&gt;          &lt;character&gt;  &lt;numeric&gt;               &lt;numeric&gt;     &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;      [1]       0,0,0    3.73373                0.979253       2.46663</span></span>
+<span><span class="co">#&gt;      [2]       0,0,0    3.17268                1.000000       1.88925</span></span>
+<span><span class="co">#&gt;      [3]       0,0,0    1.92717                0.910580       1.56251</span></span>
+<span><span class="co">#&gt;      [4]       0,0,0    2.62830                0.967662       1.87664</span></span>
+<span><span class="co">#&gt;      [5]       0,0,0    3.26733                0.988218       2.07950</span></span>
+<span><span class="co">#&gt;      ...         ...        ...                     ...           ...</span></span>
+<span><span class="co">#&gt;   [1153]       0,0,0    5.32936                1.000000       3.19002</span></span>
+<span><span class="co">#&gt;   [1154]       0,0,0    2.34929                0.956688       1.45957</span></span>
+<span><span class="co">#&gt;   [1155]       0,0,0    2.44098                0.952570       1.75091</span></span>
+<span><span class="co">#&gt;   [1156]       0,0,0    4.00059                0.993421       2.89171</span></span>
+<span><span class="co">#&gt;   [1157]       0,0,0    2.44518                0.914732       1.70571</span></span>
+<span><span class="co">#&gt;          Avg_diffMaxNeihgboor_1 Avg_diffMaxNeihgboor_2       avg       std</span></span>
+<span><span class="co">#&gt;                       &lt;numeric&gt;              &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;      [1]               1.109284               1.500514   2.88972  0.526448</span></span>
+<span><span class="co">#&gt;      [2]               1.048126               1.412119   2.13157  0.498198</span></span>
+<span><span class="co">#&gt;      [3]               0.372410               0.527703   2.08363  0.286243</span></span>
+<span><span class="co">#&gt;      [4]               0.924161               1.071454   2.61039  0.453281</span></span>
+<span><span class="co">#&gt;      [5]               1.119304               1.963420   3.44674  0.564086</span></span>
+<span><span class="co">#&gt;      ...                    ...                    ...       ...       ...</span></span>
+<span><span class="co">#&gt;   [1153]               1.571963               2.439878   3.74575  0.865201</span></span>
+<span><span class="co">#&gt;   [1154]               1.003424               1.356165   2.24773  0.492896</span></span>
+<span><span class="co">#&gt;   [1155]               0.604154               1.044648   2.51178  0.312849</span></span>
+<span><span class="co">#&gt;   [1156]               0.713450               1.819302   4.39018  0.372197</span></span>
+<span><span class="co">#&gt;   [1157]               0.726476               0.800235   1.81645  0.427180</span></span>
+<span><span class="co">#&gt;              value</span></span>
+<span><span class="co">#&gt;          &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;      [1]   3.87575</span></span>
+<span><span class="co">#&gt;      [2]   3.06324</span></span>
+<span><span class="co">#&gt;      [3]   2.41466</span></span>
+<span><span class="co">#&gt;      [4]   3.43187</span></span>
+<span><span class="co">#&gt;      [5]   4.44168</span></span>
+<span><span class="co">#&gt;      ...       ...</span></span>
+<span><span class="co">#&gt;   [1153]   5.14305</span></span>
+<span><span class="co">#&gt;   [1154]   3.13966</span></span>
+<span><span class="co">#&gt;   [1155]   3.04881</span></span>
+<span><span class="co">#&gt;   [1156]   5.02436</span></span>
+<span><span class="co">#&gt;   [1157]   2.46221</span></span>
+<span><span class="co">#&gt;   -------</span></span>
+<span><span class="co">#&gt;   regions: 1988 ranges and 0 metadata columns</span></span>
+<span><span class="co">#&gt;   seqinfo: 1 sequence from an unspecified genome; no seqlengths</span></span></code></pre></div>
+<p>Then we can use the <code><a href="http://ericscottdavis.com/mariner/reference/mergePairs.html" class="external-link">mergePairs()</a></code> function to cluster
+then merge the list of <code>GInteraction</code> objects.</p>
+<p>This function uses <code>dbscan</code> to cluster loops by a given
+genomic <code>radius</code> in base-pairs. It selects a representative
+interaction for each cluster using either the metadata
+<code>column</code> provided, or if <code>column=NULL</code> it
+calculates new ranges for each pair by calculating the median of
+modes.</p>
+<p><img src="img/cluster_merge2.png" width="50%" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mergedLoops</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/mergePairs.html" class="external-link">mergePairs</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">loopList</span>, radius<span class="op">=</span><span class="fl">10e3</span>, column<span class="op">=</span><span class="st">"APScoreAvg"</span><span class="op">)</span></span>
+<span><span class="va">mergedLoops</span></span>
+<span><span class="co">#&gt; MergedGInteractions object with 2339 interactions and 9 metadata columns:</span></span>
+<span><span class="co">#&gt;          seqnames1             ranges1     seqnames2             ranges2 |</span></span>
+<span><span class="co">#&gt;              &lt;Rle&gt;           &lt;IRanges&gt;         &lt;Rle&gt;           &lt;IRanges&gt; |</span></span>
+<span><span class="co">#&gt;      [1]      chr1 100275000-100280000 ---      chr1 100345000-100350000 |</span></span>
+<span><span class="co">#&gt;      [2]      chr1   92855000-92860000 ---      chr1   93060000-93065000 |</span></span>
+<span><span class="co">#&gt;      [3]      chr1   77975000-77980000 ---      chr1   78110000-78115000 |</span></span>
+<span><span class="co">#&gt;      [4]      chr1   89500000-89505000 ---      chr1   89600000-89605000 |</span></span>
+<span><span class="co">#&gt;      [5]      chr1 213005000-213010000 ---      chr1 213070000-213075000 |</span></span>
+<span><span class="co">#&gt;      ...       ...                 ... ...       ...                 ... .</span></span>
+<span><span class="co">#&gt;   [2335]      chr1 148135000-148140000 ---      chr1 148250000-148255000 |</span></span>
+<span><span class="co">#&gt;   [2336]      chr1 197520000-197525000 ---      chr1 198685000-198690000 |</span></span>
+<span><span class="co">#&gt;   [2337]      chr1 235515000-235520000 ---      chr1 235595000-235600000 |</span></span>
+<span><span class="co">#&gt;   [2338]      chr1 203040000-203045000 ---      chr1 203335000-203340000 |</span></span>
+<span><span class="co">#&gt;   [2339]      chr1 172450000-172455000 ---      chr1 172720000-172725000 |</span></span>
+<span><span class="co">#&gt;                color APScoreAvg ProbabilityofEnrichment RegAPScoreAvg</span></span>
+<span><span class="co">#&gt;          &lt;character&gt;  &lt;numeric&gt;               &lt;numeric&gt;     &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;      [1]       0,0,0    1.92717                0.910580       1.56251</span></span>
+<span><span class="co">#&gt;      [2]       0,0,0    3.34108                0.965907       2.43196</span></span>
+<span><span class="co">#&gt;      [3]       0,0,0    3.20562                1.000000       2.14776</span></span>
+<span><span class="co">#&gt;      [4]       0,0,0    2.80295                1.000000       2.37292</span></span>
+<span><span class="co">#&gt;      [5]       0,0,0    2.25636                1.000000       1.65880</span></span>
+<span><span class="co">#&gt;      ...         ...        ...                     ...           ...</span></span>
+<span><span class="co">#&gt;   [2335]       0,0,0    3.64734                0.985123       2.10353</span></span>
+<span><span class="co">#&gt;   [2336]       0,0,0    3.68298                0.995663       1.72712</span></span>
+<span><span class="co">#&gt;   [2337]       0,0,0    2.18036                1.000000       1.83207</span></span>
+<span><span class="co">#&gt;   [2338]       0,0,0    3.97304                0.983620       2.38127</span></span>
+<span><span class="co">#&gt;   [2339]       0,0,0    5.15098                1.000000       3.78385</span></span>
+<span><span class="co">#&gt;          Avg_diffMaxNeihgboor_1 Avg_diffMaxNeihgboor_2       avg       std</span></span>
+<span><span class="co">#&gt;                       &lt;numeric&gt;              &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;      [1]               0.372410               0.527703   2.08363  0.286243</span></span>
+<span><span class="co">#&gt;      [2]               0.779426               1.046919   2.68620  0.308547</span></span>
+<span><span class="co">#&gt;      [3]               0.760126               1.022160   2.04379  0.340562</span></span>
+<span><span class="co">#&gt;      [4]               0.287866               0.472579   2.31595  0.153064</span></span>
+<span><span class="co">#&gt;      [5]               0.606417               0.617856   1.68683  0.272008</span></span>
+<span><span class="co">#&gt;      ...                    ...                    ...       ...       ...</span></span>
+<span><span class="co">#&gt;   [2335]               1.700268               1.933103   2.69700  0.779928</span></span>
+<span><span class="co">#&gt;   [2336]               2.983473               4.808131   4.94031  1.566966</span></span>
+<span><span class="co">#&gt;   [2337]               0.209327               0.392278   1.80495  0.101174</span></span>
+<span><span class="co">#&gt;   [2338]               1.612138               1.768132   2.67911  0.721396</span></span>
+<span><span class="co">#&gt;   [2339]               0.871347               1.395824   3.64185  0.561411</span></span>
+<span><span class="co">#&gt;              value</span></span>
+<span><span class="co">#&gt;          &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;      [1]   2.41466</span></span>
+<span><span class="co">#&gt;      [2]   3.37902</span></span>
+<span><span class="co">#&gt;      [3]   2.71946</span></span>
+<span><span class="co">#&gt;      [4]   2.57183</span></span>
+<span><span class="co">#&gt;      [5]   2.22587</span></span>
+<span><span class="co">#&gt;      ...       ...</span></span>
+<span><span class="co">#&gt;   [2335]   4.20835</span></span>
+<span><span class="co">#&gt;   [2336]   7.59229</span></span>
+<span><span class="co">#&gt;   [2337]   1.99102</span></span>
+<span><span class="co">#&gt;   [2338]   4.11212</span></span>
+<span><span class="co">#&gt;   [2339]   4.41638</span></span>
+<span><span class="co">#&gt;   -------</span></span>
+<span><span class="co">#&gt;   regions: 3596 ranges and 0 metadata columns</span></span>
+<span><span class="co">#&gt;   seqinfo: 1 sequence from an unspecified genome; no seqlengths</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="exercise---finding-de-novo-loops">Exercise - Finding de novo loops<a class="anchor" aria-label="anchor" href="#exercise---finding-de-novo-loops"></a>
+</h3>
+<p>Let’s take a closer look at the <code>MergedGInteractions</code>
+object. This object looks and behaves as a normal
+<code>GInteractions</code> object, but also contains slots storing the
+clustered interactions and associated metadata. There are a few key
+accessor functions that allow you to extract, aggregate, and subset the
+interactions according to how they have clustered.</p>
+<p>The input to <code><a href="http://ericscottdavis.com/mariner/reference/mergePairs.html" class="external-link">mergePairs()</a></code> was a list of
+<code>GInteractions</code> objects. The <code><a href="http://ericscottdavis.com/mariner/reference/sources.html" class="external-link">sources()</a></code> accessor
+returns the names of each input source file:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/sources.html" class="external-link">sources</a></span><span class="op">(</span><span class="va">mergedLoops</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "0hr"  "6hr"  "72hr"</span></span></code></pre></div>
+<p>Each row of the <code>MergedGInteractions</code> object represents
+the selected interaction from each cluster of one or more interactions.
+To view all interactions in a cluster, you can use the
+<code><a href="http://ericscottdavis.com/mariner/reference/getPairClusters.html" class="external-link">getPairClusters()</a></code> function:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/getPairClusters.html" class="external-link">getPairClusters</a></span><span class="op">(</span><span class="va">mergedLoops</span><span class="op">[</span><span class="fl">1500</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [[1]]</span></span>
+<span><span class="co">#&gt;    seqnames1   start1     end1 width1 strand1 seqnames2   start2     end2</span></span>
+<span><span class="co">#&gt; 1:      chr1 94515000 94520000   5001       *      chr1 94795000 94800000</span></span>
+<span><span class="co">#&gt; 2:      chr1 94510000 94515000   5001       *      chr1 94805000 94810000</span></span>
+<span><span class="co">#&gt; 3:      chr1 94515000 94520000   5001       *      chr1 94800000 94805000</span></span>
+<span><span class="co">#&gt;    width2 strand2 color APScoreAvg ProbabilityofEnrichment RegAPScoreAvg</span></span>
+<span><span class="co">#&gt; 1:   5001       * 0,0,0   4.460383               0.9974052      2.909975</span></span>
+<span><span class="co">#&gt; 2:   5001       * 0,0,0   4.523593               0.9974524      2.931985</span></span>
+<span><span class="co">#&gt; 3:   5001       * 0,0,0   5.669824               0.9997473      3.897449</span></span>
+<span><span class="co">#&gt;    Avg_diffMaxNeihgboor_1 Avg_diffMaxNeihgboor_2      avg       std   value</span></span>
+<span><span class="co">#&gt; 1:               2.027463               2.220452 4.152661 0.9445974 5.95485</span></span>
+<span><span class="co">#&gt; 2:               1.864137               2.351764 4.316209 1.2186011 5.97322</span></span>
+<span><span class="co">#&gt; 3:               1.643575               3.224509 6.823265 1.2357823 8.28422</span></span>
+<span><span class="co">#&gt;     src</span></span>
+<span><span class="co">#&gt; 1:  0hr</span></span>
+<span><span class="co">#&gt; 2:  6hr</span></span>
+<span><span class="co">#&gt; 3: 72hr</span></span></code></pre></div>
+<p>Notice that it returns a <code>data.table</code> with a column
+appended to the end, <code>src</code>, indicating the source file of
+each interaction. All of the metadata for each specific interaction is
+also included. If you want to summarize one or more of these values for
+each cluster in the object, the <code><a href="http://ericscottdavis.com/mariner/reference/aggPairMcols.html" class="external-link">aggPairMcols()</a></code> function is
+handy.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/aggPairMcols.html" class="external-link">aggPairMcols</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span>, columns<span class="op">=</span><span class="st">"APScoreAvg"</span>, funs<span class="op">=</span><span class="st">"mean"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; MergedGInteractions object with 2339 interactions and 10 metadata columns:</span></span>
+<span><span class="co">#&gt;          seqnames1             ranges1     seqnames2             ranges2 |</span></span>
+<span><span class="co">#&gt;              &lt;Rle&gt;           &lt;IRanges&gt;         &lt;Rle&gt;           &lt;IRanges&gt; |</span></span>
+<span><span class="co">#&gt;      [1]      chr1 100275000-100280000 ---      chr1 100345000-100350000 |</span></span>
+<span><span class="co">#&gt;      [2]      chr1   92855000-92860000 ---      chr1   93060000-93065000 |</span></span>
+<span><span class="co">#&gt;      [3]      chr1   77975000-77980000 ---      chr1   78110000-78115000 |</span></span>
+<span><span class="co">#&gt;      [4]      chr1   89500000-89505000 ---      chr1   89600000-89605000 |</span></span>
+<span><span class="co">#&gt;      [5]      chr1 213005000-213010000 ---      chr1 213070000-213075000 |</span></span>
+<span><span class="co">#&gt;      ...       ...                 ... ...       ...                 ... .</span></span>
+<span><span class="co">#&gt;   [2335]      chr1 148135000-148140000 ---      chr1 148250000-148255000 |</span></span>
+<span><span class="co">#&gt;   [2336]      chr1 197520000-197525000 ---      chr1 198685000-198690000 |</span></span>
+<span><span class="co">#&gt;   [2337]      chr1 235515000-235520000 ---      chr1 235595000-235600000 |</span></span>
+<span><span class="co">#&gt;   [2338]      chr1 203040000-203045000 ---      chr1 203335000-203340000 |</span></span>
+<span><span class="co">#&gt;   [2339]      chr1 172450000-172455000 ---      chr1 172720000-172725000 |</span></span>
+<span><span class="co">#&gt;                color APScoreAvg ProbabilityofEnrichment RegAPScoreAvg</span></span>
+<span><span class="co">#&gt;          &lt;character&gt;  &lt;numeric&gt;               &lt;numeric&gt;     &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;      [1]       0,0,0    1.92717                0.910580       1.56251</span></span>
+<span><span class="co">#&gt;      [2]       0,0,0    3.34108                0.965907       2.43196</span></span>
+<span><span class="co">#&gt;      [3]       0,0,0    3.20562                1.000000       2.14776</span></span>
+<span><span class="co">#&gt;      [4]       0,0,0    2.80295                1.000000       2.37292</span></span>
+<span><span class="co">#&gt;      [5]       0,0,0    2.25636                1.000000       1.65880</span></span>
+<span><span class="co">#&gt;      ...         ...        ...                     ...           ...</span></span>
+<span><span class="co">#&gt;   [2335]       0,0,0    3.64734                0.985123       2.10353</span></span>
+<span><span class="co">#&gt;   [2336]       0,0,0    3.68298                0.995663       1.72712</span></span>
+<span><span class="co">#&gt;   [2337]       0,0,0    2.18036                1.000000       1.83207</span></span>
+<span><span class="co">#&gt;   [2338]       0,0,0    3.97304                0.983620       2.38127</span></span>
+<span><span class="co">#&gt;   [2339]       0,0,0    5.15098                1.000000       3.78385</span></span>
+<span><span class="co">#&gt;          Avg_diffMaxNeihgboor_1 Avg_diffMaxNeihgboor_2       avg       std</span></span>
+<span><span class="co">#&gt;                       &lt;numeric&gt;              &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;      [1]               0.372410               0.527703   2.08363  0.286243</span></span>
+<span><span class="co">#&gt;      [2]               0.779426               1.046919   2.68620  0.308547</span></span>
+<span><span class="co">#&gt;      [3]               0.760126               1.022160   2.04379  0.340562</span></span>
+<span><span class="co">#&gt;      [4]               0.287866               0.472579   2.31595  0.153064</span></span>
+<span><span class="co">#&gt;      [5]               0.606417               0.617856   1.68683  0.272008</span></span>
+<span><span class="co">#&gt;      ...                    ...                    ...       ...       ...</span></span>
+<span><span class="co">#&gt;   [2335]               1.700268               1.933103   2.69700  0.779928</span></span>
+<span><span class="co">#&gt;   [2336]               2.983473               4.808131   4.94031  1.566966</span></span>
+<span><span class="co">#&gt;   [2337]               0.209327               0.392278   1.80495  0.101174</span></span>
+<span><span class="co">#&gt;   [2338]               1.612138               1.768132   2.67911  0.721396</span></span>
+<span><span class="co">#&gt;   [2339]               0.871347               1.395824   3.64185  0.561411</span></span>
+<span><span class="co">#&gt;              value mean.APScoreAvg</span></span>
+<span><span class="co">#&gt;          &lt;numeric&gt;       &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;      [1]   2.41466         1.92717</span></span>
+<span><span class="co">#&gt;      [2]   3.37902         3.34108</span></span>
+<span><span class="co">#&gt;      [3]   2.71946         3.20562</span></span>
+<span><span class="co">#&gt;      [4]   2.57183         2.80295</span></span>
+<span><span class="co">#&gt;      [5]   2.22587         2.25636</span></span>
+<span><span class="co">#&gt;      ...       ...             ...</span></span>
+<span><span class="co">#&gt;   [2335]   4.20835         3.55909</span></span>
+<span><span class="co">#&gt;   [2336]   7.59229         3.08576</span></span>
+<span><span class="co">#&gt;   [2337]   1.99102         2.10958</span></span>
+<span><span class="co">#&gt;   [2338]   4.11212         3.18861</span></span>
+<span><span class="co">#&gt;   [2339]   4.41638         4.64555</span></span>
+<span><span class="co">#&gt;   -------</span></span>
+<span><span class="co">#&gt;   regions: 3596 ranges and 0 metadata columns</span></span>
+<span><span class="co">#&gt;   seqinfo: 1 sequence from an unspecified genome; no seqlengths</span></span></code></pre></div>
+<p>Finally, we can subset these interactions by the source file using
+the <code><a href="http://ericscottdavis.com/mariner/reference/subsetBySource.html" class="external-link">subsetBySource()</a></code> function. This function includes
+optional parameters, <code>include</code> and <code>exclude</code>,
+which control which sources should be grouped in the output. By default
+a list of <code>MergedGInteractions</code> objects is returned for each
+source with interactions that belong exclusively to that source.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/subsetBySource.html" class="external-link">subsetBySource</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">summary</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $`0hr`</span></span>
+<span><span class="co">#&gt; [1] "MergedGInteractions object of length 400 with 9 metadata columns"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`6hr`</span></span>
+<span><span class="co">#&gt; [1] "MergedGInteractions object of length 357 with 9 metadata columns"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`72hr`</span></span>
+<span><span class="co">#&gt; [1] "MergedGInteractions object of length 692 with 9 metadata columns"</span></span></code></pre></div>
+<p>If we want to find loops that form <em>de</em> <em>novo</em> after 72
+hours explicitly excluding the 0 and 6 hour time points, we can use the
+following code:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/subsetBySource.html" class="external-link">subsetBySource</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span>, include<span class="op">=</span><span class="st">"72hr"</span>, exclude<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0hr"</span>, <span class="st">"6hr"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; MergedGInteractions object with 692 interactions and 9 metadata columns:</span></span>
+<span><span class="co">#&gt;         seqnames1             ranges1     seqnames2             ranges2 |</span></span>
+<span><span class="co">#&gt;             &lt;Rle&gt;           &lt;IRanges&gt;         &lt;Rle&gt;           &lt;IRanges&gt; |</span></span>
+<span><span class="co">#&gt;     [1]      chr1   63910000-63915000 ---      chr1   64135000-64140000 |</span></span>
+<span><span class="co">#&gt;     [2]      chr1 145405000-145410000 ---      chr1 145720000-145725000 |</span></span>
+<span><span class="co">#&gt;     [3]      chr1   25890000-25895000 ---      chr1   26160000-26165000 |</span></span>
+<span><span class="co">#&gt;     [4]      chr1   21390000-21395000 ---      chr1   21445000-21450000 |</span></span>
+<span><span class="co">#&gt;     [5]      chr1   86420000-86425000 ---      chr1   87080000-87085000 |</span></span>
+<span><span class="co">#&gt;     ...       ...                 ... ...       ...                 ... .</span></span>
+<span><span class="co">#&gt;   [688]      chr1   84505000-84510000 ---      chr1   84595000-84600000 |</span></span>
+<span><span class="co">#&gt;   [689]      chr1   52125000-52130000 ---      chr1   52295000-52300000 |</span></span>
+<span><span class="co">#&gt;   [690]      chr1 185230000-185235000 ---      chr1 185680000-185685000 |</span></span>
+<span><span class="co">#&gt;   [691]      chr1   75260000-75265000 ---      chr1   75580000-75585000 |</span></span>
+<span><span class="co">#&gt;   [692]      chr1 168440000-168445000 ---      chr1 169115000-169120000 |</span></span>
+<span><span class="co">#&gt;               color APScoreAvg ProbabilityofEnrichment RegAPScoreAvg</span></span>
+<span><span class="co">#&gt;         &lt;character&gt;  &lt;numeric&gt;               &lt;numeric&gt;     &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;     [1]       0,0,0    2.61091                0.982305       1.76666</span></span>
+<span><span class="co">#&gt;     [2]       0,0,0    6.50401                1.000000       3.21824</span></span>
+<span><span class="co">#&gt;     [3]       0,0,0    2.66133                0.932926       1.66434</span></span>
+<span><span class="co">#&gt;     [4]       0,0,0    1.94896                0.905653       1.61320</span></span>
+<span><span class="co">#&gt;     [5]       0,0,0    2.52387                0.991184       1.71699</span></span>
+<span><span class="co">#&gt;     ...         ...        ...                     ...           ...</span></span>
+<span><span class="co">#&gt;   [688]       0,0,0    2.11616                0.915387       1.50892</span></span>
+<span><span class="co">#&gt;   [689]       0,0,0    2.97274                0.990751       2.10584</span></span>
+<span><span class="co">#&gt;   [690]       0,0,0    2.26386                0.961318       1.68927</span></span>
+<span><span class="co">#&gt;   [691]       0,0,0    2.22447                0.977893       1.81455</span></span>
+<span><span class="co">#&gt;   [692]       0,0,0    2.45284                0.977047       1.80242</span></span>
+<span><span class="co">#&gt;         Avg_diffMaxNeihgboor_1 Avg_diffMaxNeihgboor_2       avg       std</span></span>
+<span><span class="co">#&gt;                      &lt;numeric&gt;              &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;     [1]               1.329581               1.373801   2.85305  0.526063</span></span>
+<span><span class="co">#&gt;     [2]               1.847853               1.945681   1.99281  0.857298</span></span>
+<span><span class="co">#&gt;     [3]               0.930764               1.116354   1.87489  0.452668</span></span>
+<span><span class="co">#&gt;     [4]               0.402415               0.434336   2.00332  0.208011</span></span>
+<span><span class="co">#&gt;     [5]               1.211365               1.757942   3.65491  0.486245</span></span>
+<span><span class="co">#&gt;     ...                    ...                    ...       ...       ...</span></span>
+<span><span class="co">#&gt;   [688]               0.699734               0.757569   1.84793  0.349716</span></span>
+<span><span class="co">#&gt;   [689]               1.279305               1.494485   3.54655  0.494399</span></span>
+<span><span class="co">#&gt;   [690]               0.845134               0.867392   2.50149  0.534297</span></span>
+<span><span class="co">#&gt;   [691]               0.665425               0.764979   3.22076  0.466287</span></span>
+<span><span class="co">#&gt;   [692]               0.980279               1.073817   2.90334  0.565814</span></span>
+<span><span class="co">#&gt;             value</span></span>
+<span><span class="co">#&gt;         &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;     [1]   4.03490</span></span>
+<span><span class="co">#&gt;     [2]   3.63535</span></span>
+<span><span class="co">#&gt;     [3]   2.70224</span></span>
+<span><span class="co">#&gt;     [4]   2.36102</span></span>
+<span><span class="co">#&gt;     [5]   4.73168</span></span>
+<span><span class="co">#&gt;     ...       ...</span></span>
+<span><span class="co">#&gt;   [688]   2.46992</span></span>
+<span><span class="co">#&gt;   [689]   4.68371</span></span>
+<span><span class="co">#&gt;   [690]   3.25272</span></span>
+<span><span class="co">#&gt;   [691]   3.81225</span></span>
+<span><span class="co">#&gt;   [692]   3.77470</span></span>
+<span><span class="co">#&gt;   -------</span></span>
+<span><span class="co">#&gt;   regions: 3596 ranges and 0 metadata columns</span></span>
+<span><span class="co">#&gt;   seqinfo: 1 sequence from an unspecified genome; no seqlengths</span></span></code></pre></div>
+<p>If we didn’t care about whether the loop appeared at 6hrs or 72hrs,
+we can exclude the 0hr time point and the returned object will contain
+loops that were called in 6hrs or 72 hrs, but not at the 0hr time
+point.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/subsetBySource.html" class="external-link">subsetBySource</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span>, exclude<span class="op">=</span><span class="st">"0hr"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; MergedGInteractions object with 1182 interactions and 9 metadata columns:</span></span>
+<span><span class="co">#&gt;          seqnames1             ranges1     seqnames2             ranges2 |</span></span>
+<span><span class="co">#&gt;              &lt;Rle&gt;           &lt;IRanges&gt;         &lt;Rle&gt;           &lt;IRanges&gt; |</span></span>
+<span><span class="co">#&gt;      [1]      chr1   87325000-87330000 ---      chr1   87435000-87440000 |</span></span>
+<span><span class="co">#&gt;      [2]      chr1   21505000-21510000 ---      chr1   21590000-21595000 |</span></span>
+<span><span class="co">#&gt;      [3]      chr1   66995000-67000000 ---      chr1   67195000-67200000 |</span></span>
+<span><span class="co">#&gt;      [4]      chr1   90720000-90725000 ---      chr1   91160000-91165000 |</span></span>
+<span><span class="co">#&gt;      [5]      chr1 205665000-205670000 ---      chr1 205965000-205970000 |</span></span>
+<span><span class="co">#&gt;      ...       ...                 ... ...       ...                 ... .</span></span>
+<span><span class="co">#&gt;   [1178]      chr1 148135000-148140000 ---      chr1 148250000-148255000 |</span></span>
+<span><span class="co">#&gt;   [1179]      chr1 197520000-197525000 ---      chr1 198685000-198690000 |</span></span>
+<span><span class="co">#&gt;   [1180]      chr1 235515000-235520000 ---      chr1 235595000-235600000 |</span></span>
+<span><span class="co">#&gt;   [1181]      chr1 203040000-203045000 ---      chr1 203335000-203340000 |</span></span>
+<span><span class="co">#&gt;   [1182]      chr1 172450000-172455000 ---      chr1 172720000-172725000 |</span></span>
+<span><span class="co">#&gt;                color APScoreAvg ProbabilityofEnrichment RegAPScoreAvg</span></span>
+<span><span class="co">#&gt;          &lt;character&gt;  &lt;numeric&gt;               &lt;numeric&gt;     &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;      [1]       0,0,0    2.24145                0.922331       1.47099</span></span>
+<span><span class="co">#&gt;      [2]       0,0,0    2.00441                0.922253       1.58588</span></span>
+<span><span class="co">#&gt;      [3]       0,0,0    2.16722                0.931100       1.39858</span></span>
+<span><span class="co">#&gt;      [4]       0,0,0    2.54873                0.988199       1.68114</span></span>
+<span><span class="co">#&gt;      [5]       0,0,0    2.04538                0.906974       1.50262</span></span>
+<span><span class="co">#&gt;      ...         ...        ...                     ...           ...</span></span>
+<span><span class="co">#&gt;   [1178]       0,0,0    3.64734                0.985123       2.10353</span></span>
+<span><span class="co">#&gt;   [1179]       0,0,0    3.68298                0.995663       1.72712</span></span>
+<span><span class="co">#&gt;   [1180]       0,0,0    2.18036                1.000000       1.83207</span></span>
+<span><span class="co">#&gt;   [1181]       0,0,0    3.97304                0.983620       2.38127</span></span>
+<span><span class="co">#&gt;   [1182]       0,0,0    5.15098                1.000000       3.78385</span></span>
+<span><span class="co">#&gt;          Avg_diffMaxNeihgboor_1 Avg_diffMaxNeihgboor_2       avg       std</span></span>
+<span><span class="co">#&gt;                       &lt;numeric&gt;              &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;      [1]               0.784954               0.980075   1.85783  0.318350</span></span>
+<span><span class="co">#&gt;      [2]               0.429554               0.618656   2.17273  0.273960</span></span>
+<span><span class="co">#&gt;      [3]               0.828531               1.068352   1.93891  0.431294</span></span>
+<span><span class="co">#&gt;      [4]               1.534711               1.594209   3.07586  0.612626</span></span>
+<span><span class="co">#&gt;      [5]               0.611628               0.678974   1.83145  0.413529</span></span>
+<span><span class="co">#&gt;      ...                    ...                    ...       ...       ...</span></span>
+<span><span class="co">#&gt;   [1178]               1.700268               1.933103   2.69700  0.779928</span></span>
+<span><span class="co">#&gt;   [1179]               2.983473               4.808131   4.94031  1.566966</span></span>
+<span><span class="co">#&gt;   [1180]               0.209327               0.392278   1.80495  0.101174</span></span>
+<span><span class="co">#&gt;   [1181]               1.612138               1.768132   2.67911  0.721396</span></span>
+<span><span class="co">#&gt;   [1182]               0.871347               1.395824   3.64185  0.561411</span></span>
+<span><span class="co">#&gt;              value</span></span>
+<span><span class="co">#&gt;          &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;      [1]   2.55557</span></span>
+<span><span class="co">#&gt;      [2]   2.55456</span></span>
+<span><span class="co">#&gt;      [3]   2.67538</span></span>
+<span><span class="co">#&gt;      [4]   4.44005</span></span>
+<span><span class="co">#&gt;      [5]   2.37512</span></span>
+<span><span class="co">#&gt;      ...       ...</span></span>
+<span><span class="co">#&gt;   [1178]   4.20835</span></span>
+<span><span class="co">#&gt;   [1179]   7.59229</span></span>
+<span><span class="co">#&gt;   [1180]   1.99102</span></span>
+<span><span class="co">#&gt;   [1181]   4.11212</span></span>
+<span><span class="co">#&gt;   [1182]   4.41638</span></span>
+<span><span class="co">#&gt;   -------</span></span>
+<span><span class="co">#&gt;   regions: 3596 ranges and 0 metadata columns</span></span>
+<span><span class="co">#&gt;   seqinfo: 1 sequence from an unspecified genome; no seqlengths</span></span></code></pre></div>
+<p><em>Exercise</em>: How could we change this code to find transient
+loops, or loops that appeared after 6 hours of PMA treatment and
+dissolved after 72 hours of treatment?</p>
+<p>Now let’s return to our differential looping analysis to learn how to
+find quantitative changes in looping.</p>
+</div>
+<div class="section level3">
+<h3 id="finding-differential-loops">Finding differential loops<a class="anchor" aria-label="anchor" href="#finding-differential-loops"></a>
+</h3>
+<p>In the previous section, we found loops that formed <em>de</em>
+<em>novo</em> after treatment with PMA for 0, 6, or 72 hours. Using this
+approach relies entirely on the loop caller’s threshold for calling
+loops, but is unable to find quantitative changes - such as the
+strengthening or weakening of existing loops between conditions. The
+following section will allow us to find <em>both</em> <em>de</em>
+<em>novo</em> loops and those that change quantitatively.</p>
+<p>To do this we will use <code>DESeq2</code> to conduct the
+differential analysis. While <code>DEseq2</code> is typically used for
+RNA-seq analysis, we find that it works very well for finding
+differential Hi-C interactions. <code>DEseq2</code> requires three
+pieces of information to run: 1) a count matrix where each row
+represents a loop and each column represents a Hi-C replicate sample, 2)
+a <code>data.frame</code> called <code>colData</code> that contains
+sample-specific information, and 3) a design formula that describes the
+model to test.</p>
+<p>We can use <code>mariner</code> to create the count matrix by
+extracting unnormlized contact frequency between interactions for each
+Hi-C sample. First we read in the sample sheet containing Hi-C sample
+information and file paths each <code>.hic</code> file:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="st">"data/samples/samplesheet.txt"</span>, header<span class="op">=</span><span class="cn">TRUE</span>, colClasses<span class="op">=</span><span class="st">"factor"</span><span class="op">)</span></span>
+<span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu">as</span><span class="op">(</span><span class="va">samples</span>, <span class="st">"DataFrame"</span><span class="op">)</span></span>
+<span><span class="va">samples</span></span>
+<span><span class="co">#&gt; DataFrame with 12 rows and 6 columns</span></span>
+<span><span class="co">#&gt;       sample      type PMAtreatment   biorep  techrep</span></span>
+<span><span class="co">#&gt;     &lt;factor&gt;  &lt;factor&gt;     &lt;factor&gt; &lt;factor&gt; &lt;factor&gt;</span></span>
+<span><span class="co">#&gt; 1    sample1   control          0hr        1        1</span></span>
+<span><span class="co">#&gt; 2    sample2   control          0hr        1        2</span></span>
+<span><span class="co">#&gt; 3    sample3   control          0hr        2        1</span></span>
+<span><span class="co">#&gt; 4    sample4   control          0hr        2        2</span></span>
+<span><span class="co">#&gt; 5    sample5   control          0hr        3        1</span></span>
+<span><span class="co">#&gt; ...      ...       ...          ...      ...      ...</span></span>
+<span><span class="co">#&gt; 8   sample8  treatment         72hr        1        2</span></span>
+<span><span class="co">#&gt; 9   sample9  treatment         72hr        2        1</span></span>
+<span><span class="co">#&gt; 10  sample10 treatment         72hr        2        2</span></span>
+<span><span class="co">#&gt; 11  sample11 treatment         72hr        3        1</span></span>
+<span><span class="co">#&gt; 12  sample12 treatment         72hr        3        2</span></span>
+<span><span class="co">#&gt;                       filepath</span></span>
+<span><span class="co">#&gt;                       &lt;factor&gt;</span></span>
+<span><span class="co">#&gt; 1    data/hic/0hr_1_1_chr1.hic</span></span>
+<span><span class="co">#&gt; 2    data/hic/0hr_1_2_chr1.hic</span></span>
+<span><span class="co">#&gt; 3    data/hic/0hr_2_1_chr1.hic</span></span>
+<span><span class="co">#&gt; 4    data/hic/0hr_2_2_chr1.hic</span></span>
+<span><span class="co">#&gt; 5    data/hic/0hr_3_1_chr1.hic</span></span>
+<span><span class="co">#&gt; ...                        ...</span></span>
+<span><span class="co">#&gt; 8   data/hic/72hr_1_2_chr1.hic</span></span>
+<span><span class="co">#&gt; 9   data/hic/72hr_2_1_chr1.hic</span></span>
+<span><span class="co">#&gt; 10  data/hic/72hr_2_2_chr1.hic</span></span>
+<span><span class="co">#&gt; 11  data/hic/72hr_3_1_chr1.hic</span></span>
+<span><span class="co">#&gt; 12  data/hic/72hr_3_2_chr1.hic</span></span></code></pre></div>
+<p>Since we want a count matrix with a single value for each 5 Kb loop
+pixel and <code>.hic</code> file, the <code><a href="http://ericscottdavis.com/mariner/reference/pullHicPixels.html" class="external-link">pullHicPixels()</a></code>
+function is what we should use with a <code>binSize</code> of 5 Kb:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Hi-C file paths from samplesheet</span></span>
+<span><span class="va">hicFiles</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">filepath</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Extract pixels</span></span>
+<span><span class="va">pixels</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pullHicPixels.html" class="external-link">pullHicPixels</a></span><span class="op">(</span></span>
+<span>  x<span class="op">=</span><span class="va">mergedLoops</span>,</span>
+<span>  files<span class="op">=</span><span class="va">hicFiles</span>,</span>
+<span>  binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
+<span>  blockSize<span class="op">=</span><span class="fl">100e6</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">pixels</span></span>
+<span><span class="co">#&gt; class: InteractionMatrix </span></span>
+<span><span class="co">#&gt; dim: count matrix with 2339 interactions and 12 file(s)</span></span>
+<span><span class="co">#&gt; metadata(3): binSize norm matrix</span></span>
+<span><span class="co">#&gt; assays(1): counts</span></span>
+<span><span class="co">#&gt; rownames: NULL</span></span>
+<span><span class="co">#&gt; rowData names(9): color APScoreAvg ... std value</span></span>
+<span><span class="co">#&gt; colnames(12): 0hr_1_1_chr1.hic 0hr_1_2_chr1.hic ... 72hr_3_1_chr1.hic</span></span>
+<span><span class="co">#&gt;   72hr_3_2_chr1.hic</span></span>
+<span><span class="co">#&gt; colData names(2): files fileNames</span></span>
+<span><span class="co">#&gt; type: MergedGInteractions</span></span>
+<span><span class="co">#&gt; regions: 3596</span></span></code></pre></div>
+<p>The object that results is called an <code>InteractionMatrix</code>
+because it returns a single matrix for each interaction and
+<code>.hic</code> file. You can access this matrix with the
+<code>counts()</code> accessor:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">counts</span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;2339 x 12&gt; DelayedMatrix object of type "double":</span></span>
+<span><span class="co">#&gt;          0hr_1_1_chr1.hic  0hr_1_2_chr1.hic ... 72hr_3_1_chr1.hic</span></span>
+<span><span class="co">#&gt;    [1,]                15                 6   .                10</span></span>
+<span><span class="co">#&gt;    [2,]                 9                 7   .                 6</span></span>
+<span><span class="co">#&gt;    [3,]                15                 7   .                 7</span></span>
+<span><span class="co">#&gt;    [4,]                11                10   .                12</span></span>
+<span><span class="co">#&gt;    [5,]                17                21   .                 5</span></span>
+<span><span class="co">#&gt;     ...                 .                 .   .                 .</span></span>
+<span><span class="co">#&gt; [2335,]                 1                 1   .                 1</span></span>
+<span><span class="co">#&gt; [2336,]                 1                 0   .                 1</span></span>
+<span><span class="co">#&gt; [2337,]                15                 8   .                 9</span></span>
+<span><span class="co">#&gt; [2338,]                 8                 6   .                 4</span></span>
+<span><span class="co">#&gt; [2339,]                 8                10   .                 9</span></span>
+<span><span class="co">#&gt;         72hr_3_2_chr1.hic</span></span>
+<span><span class="co">#&gt;    [1,]                 8</span></span>
+<span><span class="co">#&gt;    [2,]                 5</span></span>
+<span><span class="co">#&gt;    [3,]                 5</span></span>
+<span><span class="co">#&gt;    [4,]                 7</span></span>
+<span><span class="co">#&gt;    [5,]                 3</span></span>
+<span><span class="co">#&gt;     ...                 .</span></span>
+<span><span class="co">#&gt; [2335,]                 0</span></span>
+<span><span class="co">#&gt; [2336,]                 6</span></span>
+<span><span class="co">#&gt; [2337,]                16</span></span>
+<span><span class="co">#&gt; [2338,]                10</span></span>
+<span><span class="co">#&gt; [2339,]                 7</span></span></code></pre></div>
+<p>These counts are stored on-disk in an HDF5 file to conserve R-memory
+usage. But we will talk more about this later. For now, we have
+everything we need to create a <code>DESeqDataSet</code> and run
+<code><a href="https://rdrr.io/pkg/DESeq2/man/DESeq.html" class="external-link">DESeq()</a></code>.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/mikelove/DESeq2" class="external-link">DESeq2</a></span><span class="op">)</span></span>
+<span><span class="va">dds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/DESeqDataSet.html" class="external-link">DESeqDataSetFromMatrix</a></span><span class="op">(</span></span>
+<span>  countData<span class="op">=</span><span class="fu">counts</span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span>,</span>
+<span>  colData<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">colData</a></span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span>, <span class="va">samples</span><span class="op">)</span>,</span>
+<span>  design<span class="op">=</span><span class="op">~</span><span class="va">techrep</span><span class="op">+</span><span class="va">biorep</span><span class="op">+</span><span class="va">PMAtreatment</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">dds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/DESeq.html" class="external-link">DESeq</a></span><span class="op">(</span><span class="va">dds</span><span class="op">)</span></span>
+<span><span class="va">dds</span></span>
+<span><span class="co">#&gt; class: DESeqDataSet </span></span>
+<span><span class="co">#&gt; dim: 2339 12 </span></span>
+<span><span class="co">#&gt; metadata(1): version</span></span>
+<span><span class="co">#&gt; assays(4): counts mu H cooks</span></span>
+<span><span class="co">#&gt; rownames: NULL</span></span>
+<span><span class="co">#&gt; rowData names(34): baseMean baseVar ... deviance maxCooks</span></span>
+<span><span class="co">#&gt; colnames(12): 0hr_1_1_chr1.hic 0hr_1_2_chr1.hic ... 72hr_3_1_chr1.hic</span></span>
+<span><span class="co">#&gt;   72hr_3_2_chr1.hic</span></span>
+<span><span class="co">#&gt; colData names(9): files fileNames ... filepath sizeFactor</span></span></code></pre></div>
+<p>Get shrunken results:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/lfcShrink.html" class="external-link">lfcShrink</a></span><span class="op">(</span><span class="va">dds</span>, coef<span class="op">=</span><span class="st">"PMAtreatment_72hr_vs_0hr"</span>, type<span class="op">=</span><span class="st">"apeglm"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; out of 2336 with nonzero total read count</span></span>
+<span><span class="co">#&gt; adjusted p-value &lt; 0.1</span></span>
+<span><span class="co">#&gt; LFC &gt; 0 (up)       : 37, 1.6%</span></span>
+<span><span class="co">#&gt; LFC &lt; 0 (down)     : 27, 1.2%</span></span>
+<span><span class="co">#&gt; outliers [1]       : 0, 0%</span></span>
+<span><span class="co">#&gt; low counts [2]     : 1042, 45%</span></span>
+<span><span class="co">#&gt; (mean count &lt; 3)</span></span>
+<span><span class="co">#&gt; [1] see 'cooksCutoff' argument of ?results</span></span>
+<span><span class="co">#&gt; [2] see 'independentFiltering' argument of ?results</span></span></code></pre></div>
+<p>And inspect the results with an MA plot:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/plotMA.html" class="external-link">plotMA</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-18-1.png" width="700"></p>
+<p>or a PCA plot:</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/varianceStabilizingTransformation.html" class="external-link">varianceStabilizingTransformation</a></span><span class="op">(</span><span class="va">dds</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/plotPCA.html" class="external-link">plotPCA</a></span><span class="op">(</span>intgroup <span class="op">=</span> <span class="st">"PMAtreatment"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>aspect.ratio <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-19-1.png" width="700"></p>
+<p>We can add these results from <code>DESeq2</code> to our
+<code>InteractionMatrix</code> object.</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">rowData</a></span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">res</span></span>
+<span><span class="va">pixels</span></span>
+<span><span class="co">#&gt; class: InteractionMatrix </span></span>
+<span><span class="co">#&gt; dim: count matrix with 2339 interactions and 12 file(s)</span></span>
+<span><span class="co">#&gt; metadata(3): binSize norm matrix</span></span>
+<span><span class="co">#&gt; assays(1): counts</span></span>
+<span><span class="co">#&gt; rownames: NULL</span></span>
+<span><span class="co">#&gt; rowData names(5): baseMean log2FoldChange lfcSE pvalue padj</span></span>
+<span><span class="co">#&gt; colnames(12): 0hr_1_1_chr1.hic 0hr_1_2_chr1.hic ... 72hr_3_1_chr1.hic</span></span>
+<span><span class="co">#&gt;   72hr_3_2_chr1.hic</span></span>
+<span><span class="co">#&gt; colData names(2): files fileNames</span></span>
+<span><span class="co">#&gt; type: MergedGInteractions</span></span>
+<span><span class="co">#&gt; regions: 3596</span></span></code></pre></div>
+</div>
 </div>
 <div class="section level2">
 <h2 id="aggregating-interactions">Aggregating interactions<a class="anchor" aria-label="anchor" href="#aggregating-interactions"></a>
 </h2>
-<p>TODO</p>
-<p>Topics to cover:</p>
-<ul>
-<li>Extracting Hi-C submatrices
-<ul>
-<li><code>pixelsToMatrices()</code></li>
-<li><code>pullHicMatrices()</code></li>
-<li>Accessing count matrices</li>
-</ul>
-</li>
-<li>Aggregating with <code>aggHicMatrices()</code>
-<ul>
-<li>In blocks and/or in parallel</li>
-<li>APA analysis
-<ul>
-<li><code>removeShortPairs()</code></li>
-</ul>
-</li>
-</ul>
-</li>
-<li>Extracting rectangular &amp; irregular submatrices
-<ul>
-<li><code>regularize()</code></li>
-<li>ATA analysis</li>
-</ul>
-</li>
-<li>Visualizing
-<ul>
-<li>
-<code>plotMatrix()</code> for APAs</li>
-<li>
-<code>plotMatrix()</code> for ATAs</li>
-<li>
-<code>plotMatrix()</code> for saddle plots</li>
-</ul>
-</li>
-</ul>
+<p><code>mariner</code> is not limited to extracting single pixels. The
+<code><a href="http://ericscottdavis.com/mariner/reference/pullHicMatrices.html" class="external-link">pullHicMatrices()</a></code> function allows you to define square or
+rectangular regions and extract them as matrices divided into specified
+bins. For example, the figure below shows that supplying a
+<code>binSize</code> that is half of each anchor width produces a 2x2
+matrix of pixels.</p>
+<p><img src="img/matricesFigure.png" width="50%" style="display: block; margin: auto;"></p>
+<p>In the following sections, we will define square regions around our
+merged loop pixels and extract count matrices. We will then aggregate
+these matrices and visualize the results in what is called an Aggregate
+Peak Analysis (APA). APA plots are essentially pile-up signal plots for
+Hi-C. APA is helpful for identifying genome-wide trends at specific
+loci, such as loop anchors or protein binding sites.</p>
+<div class="section level3">
+<h3 id="aggregte-peak-analysis-of-differential-loops">Aggregte peak analysis of differential loops<a class="anchor" aria-label="anchor" href="#aggregte-peak-analysis-of-differential-loops"></a>
+</h3>
+<p>We can use a helper function called <code><a href="http://ericscottdavis.com/mariner/reference/pixelsToMatrices.html" class="external-link">pixelsToMatrices()</a></code>
+to expand square regions around each central pixel.</p>
+<p><img src="img/pixToMat.png" width="10%" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">regions</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pixelsToMatrices.html" class="external-link">pixelsToMatrices</a></span><span class="op">(</span>x<span class="op">=</span><span class="fu">interactions</span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span>, buffer<span class="op">=</span><span class="fl">5</span><span class="op">)</span></span>
+<span><span class="va">regions</span></span>
+<span><span class="co">#&gt; MergedGInteractions object with 2339 interactions and 5 metadata columns:</span></span>
+<span><span class="co">#&gt;          seqnames1             ranges1     seqnames2             ranges2 |</span></span>
+<span><span class="co">#&gt;              &lt;Rle&gt;           &lt;IRanges&gt;         &lt;Rle&gt;           &lt;IRanges&gt; |</span></span>
+<span><span class="co">#&gt;      [1]      chr1 100250000-100305000 ---      chr1 100320000-100375000 |</span></span>
+<span><span class="co">#&gt;      [2]      chr1   92830000-92885000 ---      chr1   93035000-93090000 |</span></span>
+<span><span class="co">#&gt;      [3]      chr1   77950000-78005000 ---      chr1   78085000-78140000 |</span></span>
+<span><span class="co">#&gt;      [4]      chr1   89475000-89530000 ---      chr1   89575000-89630000 |</span></span>
+<span><span class="co">#&gt;      [5]      chr1 212980000-213035000 ---      chr1 213045000-213100000 |</span></span>
+<span><span class="co">#&gt;      ...       ...                 ... ...       ...                 ... .</span></span>
+<span><span class="co">#&gt;   [2335]      chr1 148110000-148165000 ---      chr1 148225000-148280000 |</span></span>
+<span><span class="co">#&gt;   [2336]      chr1 197495000-197550000 ---      chr1 198660000-198715000 |</span></span>
+<span><span class="co">#&gt;   [2337]      chr1 235490000-235545000 ---      chr1 235570000-235625000 |</span></span>
+<span><span class="co">#&gt;   [2338]      chr1 203015000-203070000 ---      chr1 203310000-203365000 |</span></span>
+<span><span class="co">#&gt;   [2339]      chr1 172425000-172480000 ---      chr1 172695000-172750000 |</span></span>
+<span><span class="co">#&gt;           baseMean log2FoldChange     lfcSE    pvalue      padj</span></span>
+<span><span class="co">#&gt;          &lt;numeric&gt;      &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt;</span></span>
+<span><span class="co">#&gt;      [1]   9.56156     -0.1705369  0.252002 0.2635900  0.569331</span></span>
+<span><span class="co">#&gt;      [2]   6.12458     -0.0938578  0.246759 0.4912155  0.752228</span></span>
+<span><span class="co">#&gt;      [3]   6.63638     -0.2478541  0.313053 0.1299725  0.425493</span></span>
+<span><span class="co">#&gt;      [4]   7.12104     -0.2191735  0.290885 0.1667762  0.460146</span></span>
+<span><span class="co">#&gt;      [5]   7.91831     -0.4337891  0.424633 0.0362829  0.235846</span></span>
+<span><span class="co">#&gt;      ...       ...            ...       ...       ...       ...</span></span>
+<span><span class="co">#&gt;   [2335]   1.10863    -0.00822639  0.276286 0.8930752        NA</span></span>
+<span><span class="co">#&gt;   [2336]   1.24407     0.14191874  0.328953 0.0352391        NA</span></span>
+<span><span class="co">#&gt;   [2337]   9.81880     0.14960593  0.242716 0.3190084  0.616591</span></span>
+<span><span class="co">#&gt;   [2338]   4.57586     0.08777030  0.255997 0.4943959  0.753424</span></span>
+<span><span class="co">#&gt;   [2339]   7.59337     0.06616084  0.232405 0.6317272  0.827952</span></span>
+<span><span class="co">#&gt;   -------</span></span>
+<span><span class="co">#&gt;   regions: 3596 ranges and 0 metadata columns</span></span>
+<span><span class="co">#&gt;   seqinfo: 1 sequence from an unspecified genome; no seqlengths</span></span></code></pre></div>
+<p>Then we can use the <code><a href="http://ericscottdavis.com/mariner/reference/pullHicMatrices.html" class="external-link">pullHicMatrices()</a></code> function to
+extract 11 x 11 matrices by setting the <code>binSize</code> to 5
+Kb:</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">matrices</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pullHicMatrices.html" class="external-link">pullHicMatrices</a></span><span class="op">(</span></span>
+<span>  x<span class="op">=</span><span class="va">regions</span>,</span>
+<span>  files<span class="op">=</span><span class="va">hicFiles</span>,</span>
+<span>  binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
+<span>  blockSize<span class="op">=</span><span class="fl">100e6</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">matrices</span></span>
+<span><span class="co">#&gt; class: InteractionArray </span></span>
+<span><span class="co">#&gt; dim: 2339 interaction(s), 12 file(s), 11x11 count matrix(es)</span></span>
+<span><span class="co">#&gt; metadata(3): binSize norm matrix</span></span>
+<span><span class="co">#&gt; assays(3): counts rownames colnames</span></span>
+<span><span class="co">#&gt; rownames: NULL</span></span>
+<span><span class="co">#&gt; rowData names(5): baseMean log2FoldChange lfcSE pvalue padj</span></span>
+<span><span class="co">#&gt; colnames(12): 0hr_1_1_chr1.hic 0hr_1_2_chr1.hic ... 72hr_3_1_chr1.hic</span></span>
+<span><span class="co">#&gt;   72hr_3_2_chr1.hic</span></span>
+<span><span class="co">#&gt; colData names(2): files fileNames</span></span>
+<span><span class="co">#&gt; type: MergedGInteractions</span></span>
+<span><span class="co">#&gt; regions: 3596</span></span></code></pre></div>
+<p>This results in an <code>InteractionArray</code> object that is very
+similar to the <code>InteractionMatrix</code> object except that it
+contains an array of pixel by Hi-C count matrices that are accessible
+with the <code>counts()</code> accessor:</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">counts</span><span class="op">(</span><span class="va">matrices</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;11 x 11 x 2339 x 12&gt; DelayedArray object of type "double":</span></span>
+<span><span class="co">#&gt; ,,1,0hr_1_1_chr1.hic</span></span>
+<span><span class="co">#&gt;        [,1]  [,2]  [,3] ... [,10] [,11]</span></span>
+<span><span class="co">#&gt;  [1,]    15     9    16   .    11     8</span></span>
+<span><span class="co">#&gt;  [2,]    11     4    13   .     8    10</span></span>
+<span><span class="co">#&gt;   ...     .     .     .   .     .     .</span></span>
+<span><span class="co">#&gt; [10,]    28    17    31   .     7     8</span></span>
+<span><span class="co">#&gt; [11,]    32    22    33   .    11     6</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ...</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ,,2339,72hr_3_2_chr1.hic</span></span>
+<span><span class="co">#&gt;        [,1]  [,2]  [,3] ... [,10] [,11]</span></span>
+<span><span class="co">#&gt;  [1,]     2     4     7   .     7     3</span></span>
+<span><span class="co">#&gt;  [2,]     4     7     7   .     7     6</span></span>
+<span><span class="co">#&gt;   ...     .     .     .   .     .     .</span></span>
+<span><span class="co">#&gt; [10,]     9     8     4   .     2     0</span></span>
+<span><span class="co">#&gt; [11,]     4     5     5   .     3     2</span></span></code></pre></div>
+<p>This array contains count matrices in the first two dimensions,
+interactions in the third dimension, and Hi-C files in the fourth
+dimension. The data is stored in an HDF5 file that is accessible with
+the <code>DelayedArray</code> package. This allows us to use this object
+as if it were held in R’s memory, but only loading data as needed
+(i.e. when operations are applied to it).</p>
+<p>We can then aggregate this array with the fast and efficient
+<code><a href="http://ericscottdavis.com/mariner/reference/aggHicMatrices.html" class="external-link">aggHicMatrices()</a></code> function. This allows you to aggregate by
+interactions, files, or all.</p>
+<p><img src="img/aggMatFig.png" width="50%" style="display: block; margin: auto;"></p>
+<p>Here we will combine all interactions for each Hi-C file by setting
+<code>by="files"</code>:</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">aggMats</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/aggHicMatrices.html" class="external-link">aggHicMatrices</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">matrices</span>, by<span class="op">=</span><span class="st">"files"</span><span class="op">)</span></span>
+<span><span class="va">aggMats</span></span>
+<span><span class="co">#&gt; &lt;11 x 11 x 12&gt; DelayedArray object of type "double":</span></span>
+<span><span class="co">#&gt; ,,0hr_1_1_chr1.hic</span></span>
+<span><span class="co">#&gt;        [,1]  [,2]  [,3] ... [,10] [,11]</span></span>
+<span><span class="co">#&gt;  [1,]  8016  8388  8627   .  7338  6923</span></span>
+<span><span class="co">#&gt;  [2,]  8850  9191  9261   .  7859  7061</span></span>
+<span><span class="co">#&gt;   ...     .     .     .   .     .     .</span></span>
+<span><span class="co">#&gt; [10,] 20223 18791 18770   .  9213  8374</span></span>
+<span><span class="co">#&gt; [11,] 24015 20171 18479   .  9130  8225</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ...</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ,,72hr_3_2_chr1.hic</span></span>
+<span><span class="co">#&gt;        [,1]  [,2]  [,3] ... [,10] [,11]</span></span>
+<span><span class="co">#&gt;  [1,]  7084  7219  7451   .  6353  6019</span></span>
+<span><span class="co">#&gt;  [2,]  7679  7994  8120   .  6767  6299</span></span>
+<span><span class="co">#&gt;   ...     .     .     .   .     .     .</span></span>
+<span><span class="co">#&gt; [10,] 17511 16543 17877   .  8062  7226</span></span>
+<span><span class="co">#&gt; [11,] 22929 17669 16094   .  7939  6986</span></span></code></pre></div>
+<p><em>Exercise</em> - Try different values for the <code>by</code>
+argument and see what you get!</p>
+<p>Since the result is a <code>DelayedArray</code> object, we can use
+<code><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply()</a></code> functions to do more complex aggregations. Let’s
+combine all the biological and technical replicates for each condition
+(0hr or 72hr).</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ctr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">aggMats</span><span class="op">[</span>,,<span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span>, <span class="va">sum</span>, na.rm<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">trt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">aggMats</span><span class="op">[</span>,,<span class="fl">7</span><span class="op">:</span><span class="fl">12</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span>, <span class="va">sum</span>, na.rm<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>And visualize them with the <code><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix()</a></code> function:</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">ctr</span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">trt</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-27-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-27-2.png" width="50%"></p>
+<p>You’ll notice that there is an artifact in the bottom left-hand
+corner. This is because interactions that are short, or close to the
+diagonal, are being superimposed. The <code><a href="http://ericscottdavis.com/mariner/reference/removeShortPairs.html" class="external-link">removeShortPairs()</a></code>
+function can be used upstream of <code><a href="http://ericscottdavis.com/mariner/reference/pullHicMatrices.html" class="external-link">pullHicMatrices()</a></code> function
+to remove any interactions that would cross the diagonal. The following
+code shows how these functions can be chained to produce APA plots
+without artifacts caused by the Hi-C diagonal.</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Remove short pairs &amp; extract counts</span></span>
+<span><span class="va">matrices</span> <span class="op">&lt;-</span></span>
+<span>  <span class="va">regions</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/removeShortPairs.html" class="external-link">removeShortPairs</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pullHicMatrices.html" class="external-link">pullHicMatrices</a></span><span class="op">(</span>files<span class="op">=</span><span class="va">hicFiles</span>, binSize<span class="op">=</span><span class="fl">5e3</span>, blockSize<span class="op">=</span><span class="fl">100e6</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Aggregate by files</span></span>
+<span><span class="va">aggMats</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/aggHicMatrices.html" class="external-link">aggHicMatrices</a></span><span class="op">(</span><span class="va">matrices</span>, by<span class="op">=</span><span class="st">"files"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Combine bio &amp; tech replicates</span></span>
+<span><span class="va">ctr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">aggMats</span><span class="op">[</span>,,<span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span>, <span class="va">sum</span>, na.rm<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">trt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">aggMats</span><span class="op">[</span>,,<span class="fl">7</span><span class="op">:</span><span class="fl">12</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span>, <span class="va">sum</span>, na.rm<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Visualize without artifacts</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">ctr</span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">trt</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-28-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-28-2.png" width="50%"></p>
+<p>You may notice that there is not much difference between the APA of
+the control vs. treatment because we are aggregating all loops together.
+We can subset the <code>InteractionArray</code> object according to our
+differential looping results to show genome-wide differences that
+support our analysis.</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Subset into gained/lost loops</span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">rowData</a></span><span class="op">(</span><span class="va">matrices</span><span class="op">)</span></span>
+<span><span class="va">gained</span> <span class="op">&lt;-</span> <span class="va">matrices</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;=</span> <span class="fl">0.1</span> <span class="op">&amp;</span> <span class="va">res</span><span class="op">$</span><span class="va">log2FoldChange</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="va">lost</span> <span class="op">&lt;-</span> <span class="va">matrices</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;=</span> <span class="fl">0.1</span> <span class="op">&amp;</span> <span class="va">res</span><span class="op">$</span><span class="va">log2FoldChange</span> <span class="op">&lt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co">## Aggregate gained/lost for control &amp; treated</span></span>
+<span><span class="va">gained_ctr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fu">counts</span><span class="op">(</span><span class="va">gained</span><span class="op">)</span><span class="op">[</span>,,,<span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span>, <span class="va">sum</span>, na.rm<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">gained_trt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fu">counts</span><span class="op">(</span><span class="va">gained</span><span class="op">)</span><span class="op">[</span>,,,<span class="fl">7</span><span class="op">:</span><span class="fl">12</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span>, <span class="va">sum</span>, na.rm<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">lost_ctr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fu">counts</span><span class="op">(</span><span class="va">lost</span><span class="op">)</span><span class="op">[</span>,,,<span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span>, <span class="va">sum</span>, na.rm<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">lost_trt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fu">counts</span><span class="op">(</span><span class="va">lost</span><span class="op">)</span><span class="op">[</span>,,,<span class="fl">7</span><span class="op">:</span><span class="fl">12</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span>, <span class="va">sum</span>, na.rm<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Normalize to the number of interactions</span></span>
+<span><span class="va">gained_ctr</span> <span class="op">&lt;-</span> <span class="va">gained_ctr</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">gained</span><span class="op">)</span></span>
+<span><span class="va">gained_trt</span> <span class="op">&lt;-</span> <span class="va">gained_trt</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">gained</span><span class="op">)</span></span>
+<span><span class="va">lost_ctr</span> <span class="op">&lt;-</span> <span class="va">lost_ctr</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">lost</span><span class="op">)</span></span>
+<span><span class="va">lost_trt</span> <span class="op">&lt;-</span> <span class="va">lost_trt</span><span class="op">/</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">lost</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Find common scale for gained/lost</span></span>
+<span><span class="va">gained_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">gained_ctr</span>, <span class="va">gained_trt</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">lost_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">lost_ctr</span>, <span class="va">lost_trt</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Visualize</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_ctr</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_trt</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">lost_ctr</span>, zrange<span class="op">=</span><span class="va">lost_scale</span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">lost_trt</span>, zrange<span class="op">=</span><span class="va">lost_scale</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-29-1.png" width="25%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-29-2.png" width="25%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-29-3.png" width="25%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-29-4.png" width="25%"></p>
+<p>In the <a href="vis_with_pg">final section of this workshop</a> we
+will take these plots and visualize them on a single page with
+labels.</p>
+<p><code>mariner</code> includes the <code>calcApa()</code> function,
+which wraps several of these steps together to simply your workflow. For
+example, the code below can be used to accomplish the same task.</p>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Identify gained/lost loops</span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">rowData</a></span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span></span>
+<span><span class="va">gained</span> <span class="op">&lt;-</span> <span class="va">pixels</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;=</span> <span class="fl">0.1</span> <span class="op">&amp;</span> <span class="va">res</span><span class="op">$</span><span class="va">log2FoldChange</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="va">lost</span> <span class="op">&lt;-</span> <span class="va">pixels</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;=</span> <span class="fl">0.1</span> <span class="op">&amp;</span> <span class="va">res</span><span class="op">$</span><span class="va">log2FoldChange</span> <span class="op">&lt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co">## Calculate apa matrices</span></span>
+<span><span class="va">gained_ctr</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pileupPixels.html" class="external-link">pileupPixels</a></span><span class="op">(</span></span>
+<span>  x<span class="op">=</span><span class="fu">interactions</span><span class="op">(</span><span class="va">gained</span><span class="op">)</span>,</span>
+<span>  files<span class="op">=</span><span class="va">hicFiles</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>,</span>
+<span>  binSize<span class="op">=</span><span class="fl">5e3</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">gained_trt</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pileupPixels.html" class="external-link">pileupPixels</a></span><span class="op">(</span></span>
+<span>  x<span class="op">=</span><span class="fu">interactions</span><span class="op">(</span><span class="va">gained</span><span class="op">)</span>,</span>
+<span>  files<span class="op">=</span><span class="va">hicFiles</span><span class="op">[</span><span class="fl">7</span><span class="op">:</span><span class="fl">12</span><span class="op">]</span>,</span>
+<span>  binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
+<span>  minPairDist<span class="op">=</span><span class="fl">50e3</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">lost_ctr</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pileupPixels.html" class="external-link">pileupPixels</a></span><span class="op">(</span></span>
+<span>  x<span class="op">=</span><span class="fu">interactions</span><span class="op">(</span><span class="va">lost</span><span class="op">)</span>,</span>
+<span>  files<span class="op">=</span><span class="va">hicFiles</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>,</span>
+<span>  binSize<span class="op">=</span><span class="fl">5e3</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">lost_trt</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pileupPixels.html" class="external-link">pileupPixels</a></span><span class="op">(</span></span>
+<span>  x<span class="op">=</span><span class="fu">interactions</span><span class="op">(</span><span class="va">lost</span><span class="op">)</span>,</span>
+<span>  files<span class="op">=</span><span class="va">hicFiles</span><span class="op">[</span><span class="fl">7</span><span class="op">:</span><span class="fl">12</span><span class="op">]</span>,</span>
+<span>  binSize<span class="op">=</span><span class="fl">5e3</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Find common scale for gained/lost</span></span>
+<span><span class="va">gained_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">gained_ctr</span>, <span class="va">gained_trt</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">lost_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">lost_ctr</span>, <span class="va">lost_trt</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Visualize</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_ctr</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_trt</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">lost_ctr</span>, zrange<span class="op">=</span><span class="va">lost_scale</span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">lost_trt</span>, zrange<span class="op">=</span><span class="va">lost_scale</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-30-1.png" width="25%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-30-2.png" width="25%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-30-3.png" width="25%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-30-4.png" width="25%"></p>
+<p>Running each step separately allows you to have the maximum amount of
+control over the settings which improves efficiency and performance. It
+also gives you more flexibility to allow custom functions that haven’t
+been explicitly created.</p>
+</div>
+<div class="section level3">
+<h3 id="aggregate-domain-analysis-of-differential-loops">Aggregate domain analysis of differential loops<a class="anchor" aria-label="anchor" href="#aggregate-domain-analysis-of-differential-loops"></a>
+</h3>
+<p>In addition to pileups of pixels, we can also perform pileup analysis
+for domains. In this analysis, we will aggregate the whole domain
+encompassed by the differential loops so we can visualize how the
+domains are changing.</p>
+<p>We can build a helper function that makes TAD with a buffer on either
+side from the loops.</p>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Write a helper function to convert</span></span>
+<span><span class="co">## loops into TADs</span></span>
+<span><span class="va">makeTadsFromLoops</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">InteractionSet</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/InteractionSet/man/distances.html" class="external-link">pairdist</a></span><span class="op">(</span><span class="va">x</span>, <span class="st">'span'</span><span class="op">)</span><span class="op">/</span><span class="fl">2</span></span>
+<span>  <span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/GInteractions-accessors.html" class="external-link">seqnames1</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/GInteractions-accessors.html" class="external-link">start1</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">-</span><span class="va">d</span>,</span>
+<span>    <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/GInteractions-accessors.html" class="external-link">end2</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">+</span><span class="va">d</span></span>
+<span>  <span class="op">)</span></span>
+<span>  <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/as_ginteractions.html" class="external-link">as_ginteractions</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">df</span>, <span class="va">df</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">tads</span> <span class="op">&lt;-</span> <span class="fu">makeTadsFromLoops</span><span class="op">(</span><span class="va">mergedLoops</span><span class="op">)</span></span></code></pre></div>
+<p>Then we can filter these tads for those that are gained after 72
+hours of PMA treatment.</p>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Identify gained TADs</span></span>
+<span><span class="va">gained</span> <span class="op">&lt;-</span> <span class="va">tads</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;=</span> <span class="fl">0.1</span> <span class="op">&amp;</span> <span class="va">res</span><span class="op">$</span><span class="va">log2FoldChange</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<p>The <code><a href="http://ericscottdavis.com/mariner/reference/pullHicMatrices.html" class="external-link">pullHicMatrices()</a></code> function can be used to extract
+count matrices for these tads at a given resolution (in this case 5
+Kb).</p>
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Pull TAD regions</span></span>
+<span><span class="va">mats</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pullHicMatrices.html" class="external-link">pullHicMatrices</a></span><span class="op">(</span></span>
+<span>  x<span class="op">=</span><span class="va">gained</span>,</span>
+<span>  files<span class="op">=</span><span class="va">hicFiles</span><span class="op">[</span><span class="fl">7</span><span class="op">:</span><span class="fl">12</span><span class="op">]</span>,</span>
+<span>  binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
+<span>  blockSize<span class="op">=</span><span class="fl">100e6</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Pairs are not binned to `binSize`.</span></span>
+<span><span class="co">#&gt; <span style="color: #0000BB;">ℹ</span> Snapping to binSize=5000, </span></span>
+<span><span class="co">#&gt; <span style="color: #0000BB;">ℹ</span> Use `binPairs()` or `snapToBins()` for more binning options.</span></span></code></pre></div>
+<p>Because each region is a different size, an irregular or jagged array
+object is returned:</p>
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mats</span></span>
+<span><span class="co">#&gt; class: InteractionJaggedArray</span></span>
+<span><span class="co">#&gt; dim: 37 interaction(s), 6 file(s), variable count matrix(es)</span></span>
+<span><span class="co">#&gt; metadata(3): binSize, norm, matrix</span></span>
+<span><span class="co">#&gt; colData: </span></span>
+<span><span class="co">#&gt; colData names(2): files, fileNames</span></span>
+<span><span class="co">#&gt; HDF5: /tmp/Rtmp5G2zGv/file427f1ab98c.h5</span></span></code></pre></div>
+<p>The <code>counts()</code> function gives access to these count
+matrices, which can be realized with <code><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list()</a></code> if
+needed.</p>
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">counts</span><span class="op">(</span><span class="va">mats</span><span class="op">)</span></span>
+<span><span class="co">#&gt; &lt;n x m x 37 x 6&gt; JaggedArray:</span></span>
+<span><span class="co">#&gt; ,,1,1</span></span>
+<span><span class="co">#&gt; &lt;55 x 55&gt; matrix</span></span>
+<span><span class="co">#&gt;        [,1]  [,2]  [,3] ... [,54] [,55]</span></span>
+<span><span class="co">#&gt;  [1,]   108    35    18   .     1     1</span></span>
+<span><span class="co">#&gt;  [2,]    35   112    29   .     2     1</span></span>
+<span><span class="co">#&gt;   ...     .     .     .   .     .     .</span></span>
+<span><span class="co">#&gt; [54,]     1     2     0   .   108    34</span></span>
+<span><span class="co">#&gt; [55,]     1     1     1   .    34   109</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ...</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ,,37,6</span></span>
+<span><span class="co">#&gt; &lt;25 x 25&gt; matrix</span></span>
+<span><span class="co">#&gt;        [,1]  [,2]  [,3] ... [,24] [,25]</span></span>
+<span><span class="co">#&gt;  [1,]   267    72    37   .     5     0</span></span>
+<span><span class="co">#&gt;  [2,]    72   283    63   .     1     3</span></span>
+<span><span class="co">#&gt;   ...     .     .     .   .     .     .</span></span>
+<span><span class="co">#&gt; [24,]     5     1     0   .   153    26</span></span>
+<span><span class="co">#&gt; [25,]     0     3     7   .    26   269</span></span></code></pre></div>
+<p>For an aggregate TAD analysis, we need to make these irregular arrays
+the same size. The <code><a href="http://ericscottdavis.com/mariner/reference/regularize.html" class="external-link">regularize()</a></code> function resizes each
+matrix to the rows and column dimensions specified in the
+<code>ndim</code> parameter. The <code>scale</code> parameter will scale
+each matrix to its total signal so that each matrix contributes the same
+relative signal to the aggregation. The result is an
+<code>InteractionArray</code> as we’ve seen in previous sections.</p>
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Convert to regular array</span></span>
+<span><span class="va">reg</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/regularize.html" class="external-link">regularize</a></span><span class="op">(</span></span>
+<span>  x<span class="op">=</span><span class="va">mats</span>,</span>
+<span>  ndim<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">100</span><span class="op">)</span>,</span>
+<span>  nBlocks<span class="op">=</span><span class="fl">10</span>,</span>
+<span>  scale<span class="op">=</span><span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 1/10 of file 1/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... Loading required namespace: fields</span></span>
+<span><span class="co">#&gt; OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 2/10 of file 1/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 3/10 of file 1/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 4/10 of file 1/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 5/10 of file 1/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 6/10 of file 1/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 7/10 of file 1/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 8/10 of file 1/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 9/10 of file 1/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 10/10 of file 1/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 1/10 of file 2/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 2/10 of file 2/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 3/10 of file 2/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 4/10 of file 2/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 5/10 of file 2/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 6/10 of file 2/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 7/10 of file 2/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 8/10 of file 2/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 9/10 of file 2/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 10/10 of file 2/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 1/10 of file 3/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 2/10 of file 3/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 3/10 of file 3/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 4/10 of file 3/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 5/10 of file 3/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 6/10 of file 3/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 7/10 of file 3/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 8/10 of file 3/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 9/10 of file 3/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 10/10 of file 3/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 1/10 of file 4/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 2/10 of file 4/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 3/10 of file 4/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 4/10 of file 4/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 5/10 of file 4/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 6/10 of file 4/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 7/10 of file 4/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 8/10 of file 4/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 9/10 of file 4/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 10/10 of file 4/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 1/10 of file 5/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 2/10 of file 5/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 3/10 of file 5/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 4/10 of file 5/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 5/10 of file 5/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 6/10 of file 5/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 7/10 of file 5/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 8/10 of file 5/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 9/10 of file 5/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 10/10 of file 5/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 1/10 of file 6/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 2/10 of file 6/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 3/10 of file 6/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 4/10 of file 6/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 5/10 of file 6/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 6/10 of file 6/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 7/10 of file 6/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 8/10 of file 6/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 9/10 of file 6/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span>
+<span><span class="co">#&gt; / Reading and realizing block 10/10 of file 6/6 ... OK</span></span>
+<span><span class="co">#&gt; \ Processing it ... OK</span></span></code></pre></div>
+<p>The regularized array can then be aggregated and visualized like
+before:</p>
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Aggregate</span></span>
+<span><span class="va">agg</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/aggHicMatrices.html" class="external-link">aggHicMatrices</a></span><span class="op">(</span><span class="va">reg</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Visualize</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">agg</span>, zrange<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.025</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; MatrixPlot[MatrixPlot1]</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-37-1.png" width="700"></p>
+<p>We can use the wrapper function <code><a href="http://ericscottdavis.com/mariner/reference/pileupDomains.html" class="external-link">pileupDomains()</a></code> to carry
+out these steps for us:</p>
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Identify gained TADs</span></span>
+<span><span class="va">gained</span> <span class="op">&lt;-</span> <span class="va">tads</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;=</span> <span class="fl">0.1</span> <span class="op">&amp;</span> <span class="va">res</span><span class="op">$</span><span class="va">log2FoldChange</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co">## Calculate aggregate TAD plots</span></span>
+<span><span class="va">gained_ctr_tads</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pileupDomains.html" class="external-link">pileupDomains</a></span><span class="op">(</span></span>
+<span>  x<span class="op">=</span><span class="va">gained</span>,</span>
+<span>  files<span class="op">=</span><span class="va">hicFiles</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
+<span>  binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
+<span>  buffer<span class="op">=</span><span class="fl">0.25</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">gained_trt_tads</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pileupDomains.html" class="external-link">pileupDomains</a></span><span class="op">(</span></span>
+<span>  x<span class="op">=</span><span class="va">gained</span>,</span>
+<span>  files<span class="op">=</span><span class="va">hicFiles</span><span class="op">[</span><span class="fl">7</span><span class="op">]</span>,</span>
+<span>  binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
+<span>  buffer<span class="op">=</span><span class="fl">0.25</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Find common scale for gained/lost</span></span>
+<span><span class="va">gq</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">gained_ctr_tads</span>, <span class="va">gained_trt_tads</span><span class="op">)</span>, <span class="fl">0.90</span><span class="op">)</span></span>
+<span><span class="va">gained_tad_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">gq</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Visualize</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_ctr_tads</span>, zrange<span class="op">=</span><span class="va">gained_tad_scale</span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_trt_tads</span>, zrange<span class="op">=</span><span class="va">gained_tad_scale</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-38-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-38-2.png" width="50%"></p>
+</div>
 </div>
 <div class="section level2">
-<h2 id="visualizing-with-plotgardener">Visualizing with <code>plotgardener</code><a class="anchor" aria-label="anchor" href="#visualizing-with-plotgardener"></a>
+<h2 id="visualizing-with-plotgardener">Visualizing with <code>plotgardener</code>
+<a id="vis_with_pg"></a><a class="anchor" aria-label="anchor" href="#visualizing-with-plotgardener"></a>
 </h2>
-<p>TODO</p>
-<p>Topics to cover:</p>
-<ul>
-<li>Philosophy of <code>plotgardener</code>
-</li>
-<li>Plotting a Hi-C plot</li>
-<li>Adding signal tracks</li>
-<li>Visualizing multiple APA plots</li>
-</ul>
+<p><code>plotgardener</code> is a genomic data visualization package for
+R. It uses a coordinate-based plotting system to give users precise
+control over the size and placement of visualizations. In this section
+we will use <code>plotgardener</code> to programmatically place our APA
+plots on a page and add text labels.</p>
+<p>To visualize multiple plots with <code>plotgardener</code> you start
+by creating a page:</p>
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://phanstiellab.github.io/plotgardener" class="external-link">plotgardener</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Create page</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/pageCreate.html" class="external-link">pageCreate</a></span><span class="op">(</span>width<span class="op">=</span><span class="fl">3</span>, height<span class="op">=</span><span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-40-1.png" width="700"></p>
+<p>We can pass additional parameters to the <code><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix()</a></code>
+function specifying where we would like these to be placed on the
+page.</p>
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## APA plots</span></span>
+<span><span class="va">gainedApa</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span></span>
+<span>  data<span class="op">=</span><span class="va">gained_ctr</span>,</span>
+<span>  zrange<span class="op">=</span><span class="va">gained_scale</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span>  height<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span></span>
+<span>  data<span class="op">=</span><span class="va">gained_trt</span>,</span>
+<span>  zrange<span class="op">=</span><span class="va">gained_scale</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span>  height<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span><span class="op">)</span></span>
+<span><span class="va">lostApa</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span></span>
+<span>  data<span class="op">=</span><span class="va">lost_ctr</span>,</span>
+<span>  zrange<span class="op">=</span><span class="va">lost_scale</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span>  height<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span></span>
+<span>  data<span class="op">=</span><span class="va">lost_trt</span>,</span>
+<span>  zrange<span class="op">=</span><span class="va">lost_scale</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span>  height<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-41-1.png" width="700"></p>
+<p>We can use annotation functions to add scale legends.</p>
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Plot heatmap legends</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/annoHeatmapLegend.html" class="external-link">annoHeatmapLegend</a></span><span class="op">(</span></span>
+<span>  plot<span class="op">=</span><span class="va">gainedApa</span>,</span>
+<span>  orientation<span class="op">=</span><span class="st">'h'</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">2.5</span>,</span>
+<span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span>  height<span class="op">=</span><span class="fl">0.1</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/annoHeatmapLegend.html" class="external-link">annoHeatmapLegend</a></span><span class="op">(</span></span>
+<span>  plot<span class="op">=</span><span class="va">lostApa</span>,</span>
+<span>  orientation<span class="op">=</span><span class="st">'h'</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">2.5</span>,</span>
+<span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span>  height<span class="op">=</span><span class="fl">0.1</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-42-1.png" width="700"></p>
+<p>and text labels:</p>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Plot text labels</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotText.html" class="external-link">plotText</a></span><span class="op">(</span></span>
+<span>  label<span class="op">=</span><span class="st">"72hr-loops"</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">0.975</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">0.45</span>,</span>
+<span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"center"</span>, <span class="st">"bottom"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotText.html" class="external-link">plotText</a></span><span class="op">(</span></span>
+<span>  label<span class="op">=</span><span class="st">"0hr-loops"</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">1.975</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">0.45</span>,</span>
+<span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"center"</span>, <span class="st">"bottom"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotText.html" class="external-link">plotText</a></span><span class="op">(</span></span>
+<span>  label<span class="op">=</span><span class="st">"0hr-hic"</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">0.45</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">0.975</span>,</span>
+<span>  rot<span class="op">=</span><span class="fl">90</span>,</span>
+<span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"center"</span>, <span class="st">"bottom"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotText.html" class="external-link">plotText</a></span><span class="op">(</span></span>
+<span>  label<span class="op">=</span><span class="st">"72hr-hic"</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">0.45</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">1.975</span>,</span>
+<span>  rot<span class="op">=</span><span class="fl">90</span>,</span>
+<span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"center"</span>, <span class="st">"bottom"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-43-1.png" width="700"></p>
+<p>When the plot is to your liking, you can remove the guides on the
+page:</p>
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/pageGuideHide.html" class="external-link">pageGuideHide</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-44-1.png" width="700"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-44-2.png" width="700"></p>
+<p><code>plotgardener</code> is a very useful tool for making
+publication-quality genomic figures. Visit the <a href="https://phanstiellab.github.io/plotgardener/" class="external-link">website</a> to learn
+more about what you can do with <code>plotgardener</code>.</p>
 </div>
   </div>
 
