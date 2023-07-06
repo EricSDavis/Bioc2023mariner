@@ -18,6 +18,40 @@ knitr::opts_chunk$set(
 )
 ```
 
+```{r, include=FALSE}
+## List the contents & files of the s3 data
+contents <- aws.s3::get_bucket("s3://bioc2023mariner", region="us-east-2")
+files <- vapply(contents, "[[", j="Key", FUN.VALUE=character(1L)) |> unname()
+
+## Write a function to 
+download_file <- function(file) {
+  
+  ## If object doesn't exist in bucket, return NA
+  ok <- aws.s3::object_exists(
+    object=file,
+    bucket="s3://bioc2023mariner/", 
+    region="us-east-2"
+  )
+  if(!ok) return(NA_character_)
+  
+  # If object exists, save it and return file path
+  aws.s3::save_object(
+      object=file,
+      bucket="s3://bioc2023mariner/", 
+      region="us-east-2",
+      file=file
+  )
+}
+
+## Download files if they don't already exist
+for(f in files) {
+  if (!file.exists(f)) {
+    download_file(f)
+  }
+}
+```
+
+
 ## Overview
 
 ### Description

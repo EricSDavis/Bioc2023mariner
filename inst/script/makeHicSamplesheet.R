@@ -4,7 +4,7 @@
 ## Paths to .hic files
 hicFiles <- 
   list.files("vignettes/data/hic", full.names=TRUE) |>
-  normalizePath()
+  gsub("vignettes/", "", x=_)
 
 ## Split by filename & format as data.frame
 samples <- 
