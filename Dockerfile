@@ -12,4 +12,5 @@ WORKDIR /home/rstudio/
 # Copy files to docker image
 COPY --chown=rstudio:rstudio --chmod=777 . Bioc2023mariner/
 
-RUN Rscript -e "remotes::install_local('.', build_vignettes=TRUE)"
+# Install workshop as package
+RUN Rscript -e "remotes::install_local('Bioc2023mariner', build_vignettes=TRUE)"
