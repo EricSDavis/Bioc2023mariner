@@ -70,7 +70,7 @@
                         <h4 data-toc-skip class="author">Eric S. Davis,
 Sarah M. Parker, Manjari Kiran, Nicole Kramer, Douglas H. Phanstiel</h4>
             
-            <h4 data-toc-skip class="date">2023-07-06</h4>
+            <h4 data-toc-skip class="date">2023-07-07</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/esdavis/Bioc2023mariner/blob/HEAD/vignettes/Bioc2023mariner.Rmd" class="external-link"><code>vignettes/Bioc2023mariner.Rmd</code></a></small>
       <div class="hidden name"><code>Bioc2023mariner.Rmd</code></div>
@@ -230,7 +230,7 @@ and <code>DESeq2</code>.</li>
 <code>mariner</code> to identify differential loops between K562 cells
 treated with PMA for 0 or 72 hours.</p>
 <div class="section level3">
-<h3 id="clustering-and-merging-loops">Clustering and merging loops<a class="anchor" aria-label="anchor" href="#clustering-and-merging-loops"></a>
+<h3 id="merge-redundant-loops">Merge redundant loops<a class="anchor" aria-label="anchor" href="#merge-redundant-loops"></a>
 </h3>
 <p>The first step in this analysis is to read in and combine loop calls
 for K562 cells treated for 0, 6, or 72 hours. Due to technical and
@@ -248,12 +248,16 @@ reading in BEDPE-formatted loops, and converting them to
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ericscottdavis.com/mariner/" class="external-link">mariner</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co">## Read in 3 loop files as a list of GInteractions objects</span></span>
-<span><span class="va">loopList</span> <span class="op">&lt;-</span> </span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="st">"data/loops"</span>, full.names<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">read.table</span>, header<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">as_ginteractions</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">loopList</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0hr"</span>, <span class="st">"6hr"</span>, <span class="st">"72hr"</span><span class="op">)</span></span>
+<span><span class="co">## Read in loops</span></span>
+<span><span class="va">loops00hr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="st">"data/loops/0hr_5kbLoops_chr1.txt"</span>, header<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">loops06hr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="st">"data/loops/6hr_5kbLoops_chr1.txt"</span>, header<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">loops72hr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="st">"data/loops/72hr_5kbLoops_chr1.txt"</span>, header<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Put into a list</span></span>
+<span><span class="va">loopList</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"0hr"</span><span class="op">=</span><span class="va">loops00hr</span>, <span class="st">"6hr"</span><span class="op">=</span><span class="va">loops06hr</span>, <span class="st">"72hr"</span><span class="op">=</span><span class="va">loops72hr</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Convert to GInteractions objects</span></span>
+<span><span class="va">loopList</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">loopList</span>, <span class="va">as_ginteractions</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">## Show list of GInteractions</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">loopList</span>, <span class="va">summary</span><span class="op">)</span></span>
@@ -572,10 +576,8 @@ following code:</p>
 <span><span class="co">#&gt;   -------</span></span>
 <span><span class="co">#&gt;   regions: 3596 ranges and 0 metadata columns</span></span>
 <span><span class="co">#&gt;   seqinfo: 1 sequence from an unspecified genome; no seqlengths</span></span></code></pre></div>
-<p>If we didn’t care about whether the loop appeared at 6hrs or 72hrs,
-we can exclude the 0hr time point and the returned object will contain
-loops that were called in 6hrs or 72 hrs, but not at the 0hr time
-point.</p>
+<p>To find loops that were present at either 6 or 72 hrs, but not
+present at 0 hrs, we can exclude the 0hr time point:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/subsetBySource.html" class="external-link">subsetBySource</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span>, exclude<span class="op">=</span><span class="st">"0hr"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; MergedGInteractions object with 1182 interactions and 9 metadata columns:</span></span>
@@ -647,9 +649,10 @@ find quantitative changes in looping.</p>
 <em>novo</em> after treatment with PMA for 0, 6, or 72 hours. Using this
 approach relies entirely on the loop caller’s threshold for calling
 loops, but is unable to find quantitative changes - such as the
-strengthening or weakening of existing loops between conditions. The
-following section will allow us to find <em>both</em> <em>de</em>
-<em>novo</em> loops and those that change quantitatively.</p>
+strengthening or weakening of existing loops between conditions.
+Additionally, the presence/absence of a loop doesn’t necessarily mean
+that we gained or lost a loop. In this section we take a more
+statistically rigorous approach to finding differential looping.</p>
 <p>To do this we will use <code>DESeq2</code> to conduct the
 differential analysis. While <code>DEseq2</code> is typically used for
 RNA-seq analysis, we find that it works very well for finding
@@ -832,7 +835,7 @@ Peak Analysis (APA). APA plots are essentially pile-up signal plots for
 Hi-C. APA is helpful for identifying genome-wide trends at specific
 loci, such as loop anchors or protein binding sites.</p>
 <div class="section level3">
-<h3 id="aggregte-peak-analysis-of-differential-loops">Aggregte peak analysis of differential loops<a class="anchor" aria-label="anchor" href="#aggregte-peak-analysis-of-differential-loops"></a>
+<h3 id="aggregate-peak-analysis-of-differential-loops">Aggregate peak analysis of differential loops<a class="anchor" aria-label="anchor" href="#aggregate-peak-analysis-of-differential-loops"></a>
 </h3>
 <p>We can use a helper function called <code><a href="http://ericscottdavis.com/mariner/reference/pixelsToMatrices.html" class="external-link">pixelsToMatrices()</a></code>
 to expand square regions around each central pixel.</p>
@@ -967,9 +970,9 @@ combine all the biological and technical replicates for each condition
 corner. This is because interactions that are short, or close to the
 diagonal, are being superimposed. The <code><a href="http://ericscottdavis.com/mariner/reference/removeShortPairs.html" class="external-link">removeShortPairs()</a></code>
 function can be used upstream of <code><a href="http://ericscottdavis.com/mariner/reference/pullHicMatrices.html" class="external-link">pullHicMatrices()</a></code> function
-to remove any interactions that would cross the diagonal. The following
-code shows how these functions can be chained to produce APA plots
-without artifacts caused by the Hi-C diagonal.</p>
+to remove any part of the regions that would cross the diagonal. The
+following code shows how these functions can be chained to produce APA
+plots without artifacts caused by the Hi-C diagonal.</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Remove short pairs &amp; extract counts</span></span>
 <span><span class="va">matrices</span> <span class="op">&lt;-</span></span>
@@ -1122,7 +1125,7 @@ object is returned:</p>
 <span><span class="co">#&gt; metadata(3): binSize, norm, matrix</span></span>
 <span><span class="co">#&gt; colData: </span></span>
 <span><span class="co">#&gt; colData names(2): files, fileNames</span></span>
-<span><span class="co">#&gt; HDF5: /tmp/Rtmp5G2zGv/file427f1ab98c.h5</span></span></code></pre></div>
+<span><span class="co">#&gt; HDF5: /tmp/RtmpW6Lwbn/file3c4769580d9.h5</span></span></code></pre></div>
 <p>The <code>counts()</code> function gives access to these count
 matrices, which can be realized with <code><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list()</a></code> if
 needed.</p>
