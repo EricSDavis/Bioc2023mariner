@@ -19,7 +19,15 @@ Depends:
 Suggests: 
     knitr,
     rmarkdown,
-    pkgdown
+    pkgdown,
+    aws.s3,
+    InteractionSet,
+    DESeq2,
+    apeglm,
+    ggplot2,
+    mariner,
+    fields,
+    plotgardener
 URL: https://ericsdavis.github.io/Bioc2023mariner/
 BugReports: https://github.com/esdavis/Bioc2023mariner/issues/new/choose
 VignetteBuilder: knitr

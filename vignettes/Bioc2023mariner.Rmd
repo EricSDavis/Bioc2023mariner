@@ -10,7 +10,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-
 ```{r, include=FALSE}
 knitr::opts_chunk$set(
   collapse=TRUE,
@@ -23,7 +22,7 @@ knitr::opts_chunk$set(
 contents <- aws.s3::get_bucket("s3://bioc2023mariner", region="us-east-2")
 files <- vapply(contents, "[[", j="Key", FUN.VALUE=character(1L)) |> unname()
 
-## Write a function to 
+## Write a function to download required data from s3
 download_file <- function(file) {
   
   ## If object doesn't exist in bucket, return NA
@@ -34,7 +33,7 @@ download_file <- function(file) {
   )
   if(!ok) return(NA_character_)
   
-  # If object exists, save it and return file path
+  ## If object exists, save it and return file path
   aws.s3::save_object(
       object=file,
       bucket="s3://bioc2023mariner/", 
@@ -146,7 +145,7 @@ In this section we will use `DESeq2` and `mariner` to
 identify differential loops between K562 cells treated
 with PMA for 0 or 72 hours.
 
-### Clustering and merging loops
+### Merge redundant loops
 
 The first step in this analysis is to read in and combine
 loop calls for K562 cells treated for 0, 6, or 72 hours.
@@ -170,12 +169,16 @@ them to `GInteractions` objects.
 ```{r message=FALSE}
 library(mariner)
 
-## Read in 3 loop files as a list of GInteractions objects
-loopList <- 
-  list.files("data/loops", full.names=TRUE) |>
-  lapply(read.table, header=TRUE) |>
-  lapply(as_ginteractions)
-names(loopList) <- c("0hr", "6hr", "72hr")
+## Read in loops
+loops00hr <- read.table("data/loops/0hr_5kbLoops_chr1.txt", header=TRUE)
+loops06hr <- read.table("data/loops/6hr_5kbLoops_chr1.txt", header=TRUE)
+loops72hr <- read.table("data/loops/72hr_5kbLoops_chr1.txt", header=TRUE)
+
+## Put into a list
+loopList <- list("0hr"=loops00hr, "6hr"=loops06hr, "72hr"=loops72hr)
+
+## Convert to GInteractions objects
+loopList <- lapply(loopList, as_ginteractions)
 
 ## Show list of GInteractions
 lapply(loopList, summary)
@@ -257,11 +260,8 @@ following code:
 ```{r}
 subsetBySource(x=mergedLoops, include="72hr", exclude=c("0hr", "6hr"))
 ```
-
-If we didn't care about whether the loop appeared at 6hrs or
-72hrs, we can exclude the 0hr time point and the returned
-object will contain loops that were called in 6hrs or 72 hrs,
-but not at the 0hr time point.
+To find loops that were present at either 6 or 72 hrs, but not
+present at 0 hrs, we can exclude the 0hr time point:
 
 ```{r}
 subsetBySource(x=mergedLoops, exclude="0hr")
@@ -285,9 +285,11 @@ _de_ _novo_ after treatment with PMA for 0, 6, or 72
 hours. Using this approach relies entirely on the loop
 caller's threshold for calling loops, but is unable to
 find quantitative changes - such as the strengthening
-or weakening of existing loops between conditions. The
-following section will allow us to find *both* _de_ _novo_
-loops and those that change quantitatively.
+or weakening of existing loops between conditions. 
+Additionally, the presence/absence of a loop doesn't 
+necessarily mean that we gained or lost a loop. In this
+section we take a more statistically rigorous approach to
+finding differential looping.
 
 To do this we will use `DESeq2` to conduct the
 differential analysis. While `DEseq2` is typically
@@ -414,7 +416,7 @@ APA plots are essentially pile-up signal plots for Hi-C.
 APA is helpful for identifying genome-wide trends at specific
 loci, such as loop anchors or protein binding sites.
 
-### Aggregte peak analysis of differential loops
+### Aggregate peak analysis of differential loops
 
 We can use a helper function called `pixelsToMatrices()`
 to expand square regions around each central pixel.
@@ -500,7 +502,7 @@ You'll notice that there is an artifact in the bottom
 left-hand corner. This is because interactions that are
 short, or close to the diagonal, are being superimposed.
 The `removeShortPairs()` function can be used upstream
-of `pullHicMatrices()` function to remove any interactions
+of `pullHicMatrices()` function to remove any part of the regions
 that would cross the diagonal. The following code shows how
 these functions can be chained to produce APA plots without
 artifacts caused by the Hi-C diagonal.

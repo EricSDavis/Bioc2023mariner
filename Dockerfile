@@ -12,4 +12,4 @@ WORKDIR /home/rstudio/
 # Copy files to docker image
 COPY --chown=rstudio:rstudio --chmod=777 . Bioc2023mariner/
 
-# RUN Rscript -e "options(repos = c(CRAN = 'https://cran.r-project.org')); devtools::install('.', dependencies=TRUE, build_vignettes=TRUE, repos = BiocManager::repositories())"
+RUN Rscript -e "remotes::install_local('.', build_vignettes=TRUE)"
