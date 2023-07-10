@@ -17,10 +17,15 @@ samples <-
   apply(2, as.factor) |>
   as.data.frame()
 
+## Remove bio/tech rep for workshop examples
+samples$biorep <- NULL
+samples$techrep <- NULL
+
 ## Add additional info
 info <- data.frame(
   sample=paste0("sample", seq_len(nrow(samples))),
-  type=c(rep("control", 6), rep("treatment", 6))
+  condition=c(rep("control", 6), rep("treatment", 6)),
+  replicate=c(1:6, 1:6)
 )
 
 ## Add filepath
@@ -34,6 +39,6 @@ samplesheet <- cbind(info, samples, filepath)
 ## Write out results
 write.table(
   x=samplesheet,
-  file="/home/rstudio/vignettes/data/samples/samplesheet.txt",
+  file="/home/rstudio/Bioc2023mariner/vignettes/data/samples/samplesheet.txt",
   sep="\t"
 )

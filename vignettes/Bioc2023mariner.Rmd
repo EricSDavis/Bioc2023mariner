@@ -339,10 +339,23 @@ and `.hic` file. You can access this matrix with the
 counts(pixels)
 ```
 
+```{r interactionMatrixFig, fig.align='center', out.width='50%', echo=FALSE}
+knitr::include_graphics("img/interactionMatrixFig.png")
+```
+
 These counts are stored on-disk in an HDF5 file to
 conserve R-memory usage. But we will talk more about
-this later. For now, we have everything we need to
-create a `DESeqDataSet` and run `DESeq()`.
+this later. We can use the `DelayedArray::rowSums()`
+function to filter out any low-count loops to improve our
+power to call differential loops:
+
+```{r}
+keep <- which(DelayedArray::rowMeans(counts(pixels)) >= 3)
+pixels <- pixels[keep]
+```
+
+Then we can create a `DESeqDataSet` and
+run `DESeq()`:
 
 ```{r, message=FALSE}
 library(DESeq2)
@@ -461,13 +474,18 @@ object as if it were held in R's memory, but only
 loading data as needed (i.e. when operations are
 applied to it).
 
+```{r interactionArrayFig, fig.align='center', out.width='75%', echo=FALSE}
+knitr::include_graphics("img/interactionArrayFig.png")
+```
+
+
 We can then aggregate this array with the fast
 and efficient `aggHicMatrices()` function.
 This allows you to aggregate by interactions,
 files, or all.
 
-```{r aggMatFig, fig.align='center', out.width='50%', echo=FALSE}
-knitr::include_graphics("img/aggMatFig.png")
+```{r aggMatFigAlt, fig.align='center', out.width='75%', echo=FALSE}
+knitr::include_graphics("img/aggMatFigAlt.png")
 ```
 
 Here we will combine all interactions for each
@@ -533,7 +551,7 @@ the `InteractionArray` object according to our
 differential looping results to show genome-wide
 differences that support our analysis.
 
-```{r, message=FALSE, fig.show="hold", out.width="25%"}
+```{r, message=FALSE}
 ## Subset into gained/lost loops
 res <- rowData(matrices)
 gained <- matrices[which(res$padj <= 0.1 & res$log2FoldChange > 0)]
@@ -554,10 +572,19 @@ lost_trt <- lost_trt/length(lost)
 ## Find common scale for gained/lost
 gained_scale <- c(0, max(gained_ctr, gained_trt))
 lost_scale <- c(0, max(lost_ctr, lost_trt))
+```
 
-## Visualize
+Then we can visualize the gained loops in control
+and treatment:
+
+```{r, message=FALSE, fig.show="hold", out.width="50%"}
 plotMatrix(gained_ctr, zrange=gained_scale)
 plotMatrix(gained_trt, zrange=gained_scale)
+```
+
+And the lost loops in control and treatment:
+
+```{r, message=FALSE, fig.show="hold", out.width="50%"}
 plotMatrix(lost_ctr, zrange=lost_scale)
 plotMatrix(lost_trt, zrange=lost_scale)
 ```
@@ -569,7 +596,7 @@ these plots and visualize them on a single page with labels.
 of these steps together to simply your workflow. For example,
 the code below can be used to accomplish the same task.
 
-```{r, message=FALSE, fig.show="hold", out.width="25%"}
+```{r, message=FALSE}
 ## Identify gained/lost loops
 res <- rowData(pixels)
 gained <- pixels[which(res$padj <= 0.1 & res$log2FoldChange > 0)]
@@ -601,10 +628,19 @@ lost_trt <- pileupPixels(
 ## Find common scale for gained/lost
 gained_scale <- c(0, max(gained_ctr, gained_trt))
 lost_scale <- c(0, max(lost_ctr, lost_trt))
+```
 
-## Visualize
+Then we can visualize the gained loops in control
+and treatment:
+
+```{r, message=FALSE, fig.show="hold", out.width="50%"}
 plotMatrix(gained_ctr, zrange=gained_scale)
 plotMatrix(gained_trt, zrange=gained_scale)
+```
+
+And the lost loops in control and treatment:
+
+```{r, message=FALSE, fig.show="hold", out.width="50%"}
 plotMatrix(lost_ctr, zrange=lost_scale)
 plotMatrix(lost_trt, zrange=lost_scale)
 ```
@@ -689,7 +725,7 @@ the aggregation. The result is an
 `InteractionArray` as we've seen in
 previous sections.
 
-```{r}
+```{r, message=FALSE}
 ## Convert to regular array
 reg <- regularize(
   x=mats,
@@ -702,7 +738,7 @@ reg <- regularize(
 The regularized array can then be
 aggregated and visualized like before:
 
-```{r}
+```{r, message=FALSE}
 ## Aggregate
 agg <- aggHicMatrices(reg)
 
@@ -803,7 +839,7 @@ plotMatrix(
 We can use annotation functions to add scale legends. 
 
 ```{r message=FALSE, results='hold'}
-## Plot heatmap legends
+## APA heatmap legends
 annoHeatmapLegend(
   plot=gainedApa,
   orientation='h',
@@ -865,3 +901,173 @@ pageGuideHide()
 publication-quality genomic figures. Visit the
 [website](https://phanstiellab.github.io/plotgardener/)
 to learn more about what you can do with `plotgardener`.
+
+For example, we could plot an example loop beside these
+APA plots:
+
+```{r, message=FALSE}
+## Create page
+pageCreate(width=6, height=3, showGuides=FALSE)
+
+## APA plots
+gainedApa <- plotMatrix(
+  data=gained_ctr,
+  zrange=gained_scale,
+  x=0.5,
+  y=0.5,
+  width=0.95,
+  height=0.95,
+)
+plotMatrix(
+  data=gained_trt,
+  zrange=gained_scale,
+  x=0.5,
+  y=1.5,
+  width=0.95,
+  height=0.95,
+)
+lostApa <- plotMatrix(
+  data=lost_ctr,
+  zrange=lost_scale,
+  x=1.5,
+  y=0.5,
+  width=0.95,
+  height=0.95,
+)
+plotMatrix(
+  data=lost_trt,
+  zrange=lost_scale,
+  x=1.5,
+  y=1.5,
+  width=0.95,
+  height=0.95,
+)
+
+## APA heatmap legends
+annoHeatmapLegend(
+  plot=gainedApa,
+  orientation='h',
+  x=0.5,
+  y=2.5,
+  width=0.95,
+  height=0.1
+)
+annoHeatmapLegend(
+  plot=lostApa,
+  orientation='h',
+  x=1.5,
+  y=2.5,
+  width=0.95,
+  height=0.1
+)
+
+## Plot text labels
+plotText(
+  label="72hr-loops",
+  x=0.975,
+  y=0.45,
+  just=c("center", "bottom")
+)
+plotText(
+  label="0hr-loops",
+  x=1.975,
+  y=0.45,
+  just=c("center", "bottom")
+)
+plotText(
+  label="0hr-hic",
+  x=0.45,
+  y=0.975,
+  rot=90,
+  just=c("center", "bottom")
+)
+plotText(
+  label="72hr-hic",
+  x=0.45,
+  y=1.975,
+  rot=90,
+  just=c("center", "bottom")
+)
+
+## Plot Hi-C example loop
+hicPlot <- plotHicSquare(
+  ## Path to .hic file
+  data=hicFiles[1],
+  
+  ## Loci
+  chrom="chr1",
+  chromstart=213.9e6,
+  chromend=215e6,
+  
+  ## Hi-C params
+  resolution=10e3,
+  zrange=c(0, 40),
+  norm="KR",
+  half="top",
+  
+  ## Placement on page
+  x=3,
+  y=0.5,
+  width=2,
+  height=2
+)
+plotHicSquare(
+  ## Path to .hic file
+  data=hicFiles[7],
+  
+  ## Loci
+  chrom="chr1",
+  chromstart=213.9e6,
+  chromend=215e6,
+  
+  ## Plotting params
+  resolution=10e3,
+  zrange=c(0, 40),
+  norm="KR",
+  half="bottom",
+  
+  ## Placement on page
+  x=3,
+  y=0.5,
+  width=2,
+  height=2
+)
+
+## Genome coordinate label
+annoGenomeLabel(
+  plot=hicPlot,
+  scale="Mb",
+  x=3,
+  y=2.5
+)
+
+## Hi-C heatmap legend
+annoHeatmapLegend(
+  plot=hicPlot,
+  orientation='v',
+  x=5.05,
+  y=0.5,
+  width=0.1,
+  height=1
+)
+
+## Plot title & half labels
+plotText(
+  label="Example Loop; 10Kb bins",
+  x=4,
+  y=0.45,
+  just=c("center", "bottom")
+)
+plotText(
+  label="0hrs",
+  x=3.05,
+  y=0.55,
+  just=c("left", "top")
+)
+plotText(
+  label="72hrs",
+  x=4.95,
+  y=2.45,
+  just=c("right", "bottom")
+)
+```
