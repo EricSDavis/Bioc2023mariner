@@ -345,16 +345,7 @@ knitr::include_graphics("img/interactionMatrixFig.png")
 
 These counts are stored on-disk in an HDF5 file to
 conserve R-memory usage. But we will talk more about
-this later. We can use the `DelayedArray::rowSums()`
-function to filter out any low-count loops to improve our
-power to call differential loops:
-
-```{r}
-keep <- which(DelayedArray::rowMeans(counts(pixels)) >= 3)
-pixels <- pixels[keep]
-```
-
-Then we can create a `DESeqDataSet` and
+this later. For now, we can create a `DESeqDataSet` and
 run `DESeq()`:
 
 ```{r, message=FALSE}
@@ -362,7 +353,7 @@ library(DESeq2)
 dds <- DESeqDataSetFromMatrix(
   countData=counts(pixels),
   colData=cbind(colData(pixels), samples),
-  design=~techrep+biorep+PMAtreatment
+  design=~replicate+condition
 )
 dds <- DESeq(dds)
 dds
@@ -371,7 +362,7 @@ dds
 Get shrunken results:
 
 ```{r, message=FALSE}
-res <- lfcShrink(dds, coef="PMAtreatment_72hr_vs_0hr", type="apeglm")
+res <- lfcShrink(dds, coef="condition_treatment_vs_control", type="apeglm")
 summary(res)
 ```
 And inspect the results with an MA plot:
@@ -384,7 +375,7 @@ or a PCA plot:
 
 ```{r}
 varianceStabilizingTransformation(dds) |>
-  plotPCA(intgroup = "PMAtreatment") +
+  plotPCA(intgroup="condition") +
   ggplot2::theme(aspect.ratio = 1)
 ```
 
@@ -404,7 +395,7 @@ colData(tmp) <- cbind(colData(tmp), samples)
 counts(tmp) <- as.matrix(counts(tmp))
 
 library(DESeq2)
-DESeqDataSet(tmp, design = ~techrep + biorep + PMAtreatment)
+DESeqDataSet(tmp, design = ~replicate+condition)
 ```
 
 ## Aggregating interactions

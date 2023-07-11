@@ -40,5 +40,7 @@ samplesheet <- cbind(info, samples, filepath)
 write.table(
   x=samplesheet,
   file="/home/rstudio/Bioc2023mariner/vignettes/data/samples/samplesheet.txt",
-  sep="\t"
+  sep="\t",
+  row.names=FALSE,
+  quote=FALSE
 )
