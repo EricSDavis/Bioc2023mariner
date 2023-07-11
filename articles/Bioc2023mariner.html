@@ -70,9 +70,9 @@
                         <h4 data-toc-skip class="author">Eric S. Davis,
 Sarah M. Parker, Manjari Kiran, Nicole Kramer, Douglas H. Phanstiel</h4>
             
-            <h4 data-toc-skip class="date">2023-07-07</h4>
+            <h4 data-toc-skip class="date">2023-07-11</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/esdavis/Bioc2023mariner/blob/HEAD/vignettes/Bioc2023mariner.Rmd" class="external-link"><code>vignettes/Bioc2023mariner.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ericsdavis/Bioc2023mariner/blob/HEAD/vignettes/Bioc2023mariner.Rmd" class="external-link"><code>vignettes/Bioc2023mariner.Rmd</code></a></small>
       <div class="hidden name"><code>Bioc2023mariner.Rmd</code></div>
 
     </div>
@@ -670,33 +670,20 @@ information and file paths each <code>.hic</code> file:</p>
 <code class="sourceCode R"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="st">"data/samples/samplesheet.txt"</span>, header<span class="op">=</span><span class="cn">TRUE</span>, colClasses<span class="op">=</span><span class="st">"factor"</span><span class="op">)</span></span>
 <span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu">as</span><span class="op">(</span><span class="va">samples</span>, <span class="st">"DataFrame"</span><span class="op">)</span></span>
 <span><span class="va">samples</span></span>
-<span><span class="co">#&gt; DataFrame with 12 rows and 6 columns</span></span>
-<span><span class="co">#&gt;       sample      type PMAtreatment   biorep  techrep</span></span>
-<span><span class="co">#&gt;     &lt;factor&gt;  &lt;factor&gt;     &lt;factor&gt; &lt;factor&gt; &lt;factor&gt;</span></span>
-<span><span class="co">#&gt; 1    sample1   control          0hr        1        1</span></span>
-<span><span class="co">#&gt; 2    sample2   control          0hr        1        2</span></span>
-<span><span class="co">#&gt; 3    sample3   control          0hr        2        1</span></span>
-<span><span class="co">#&gt; 4    sample4   control          0hr        2        2</span></span>
-<span><span class="co">#&gt; 5    sample5   control          0hr        3        1</span></span>
-<span><span class="co">#&gt; ...      ...       ...          ...      ...      ...</span></span>
-<span><span class="co">#&gt; 8   sample8  treatment         72hr        1        2</span></span>
-<span><span class="co">#&gt; 9   sample9  treatment         72hr        2        1</span></span>
-<span><span class="co">#&gt; 10  sample10 treatment         72hr        2        2</span></span>
-<span><span class="co">#&gt; 11  sample11 treatment         72hr        3        1</span></span>
-<span><span class="co">#&gt; 12  sample12 treatment         72hr        3        2</span></span>
-<span><span class="co">#&gt;                       filepath</span></span>
-<span><span class="co">#&gt;                       &lt;factor&gt;</span></span>
-<span><span class="co">#&gt; 1    data/hic/0hr_1_1_chr1.hic</span></span>
-<span><span class="co">#&gt; 2    data/hic/0hr_1_2_chr1.hic</span></span>
-<span><span class="co">#&gt; 3    data/hic/0hr_2_1_chr1.hic</span></span>
-<span><span class="co">#&gt; 4    data/hic/0hr_2_2_chr1.hic</span></span>
-<span><span class="co">#&gt; 5    data/hic/0hr_3_1_chr1.hic</span></span>
-<span><span class="co">#&gt; ...                        ...</span></span>
-<span><span class="co">#&gt; 8   data/hic/72hr_1_2_chr1.hic</span></span>
-<span><span class="co">#&gt; 9   data/hic/72hr_2_1_chr1.hic</span></span>
-<span><span class="co">#&gt; 10  data/hic/72hr_2_2_chr1.hic</span></span>
-<span><span class="co">#&gt; 11  data/hic/72hr_3_1_chr1.hic</span></span>
-<span><span class="co">#&gt; 12  data/hic/72hr_3_2_chr1.hic</span></span></code></pre></div>
+<span><span class="co">#&gt; DataFrame with 12 rows and 5 columns</span></span>
+<span><span class="co">#&gt;       sample condition replicate PMAtreatment                   filepath</span></span>
+<span><span class="co">#&gt;     &lt;factor&gt;  &lt;factor&gt;  &lt;factor&gt;     &lt;factor&gt;                   &lt;factor&gt;</span></span>
+<span><span class="co">#&gt; 1    sample1   control         1          0hr  data/hic/0hr_1_1_chr1.hic</span></span>
+<span><span class="co">#&gt; 2    sample2   control         2          0hr  data/hic/0hr_1_2_chr1.hic</span></span>
+<span><span class="co">#&gt; 3    sample3   control         3          0hr  data/hic/0hr_2_1_chr1.hic</span></span>
+<span><span class="co">#&gt; 4    sample4   control         4          0hr  data/hic/0hr_2_2_chr1.hic</span></span>
+<span><span class="co">#&gt; 5    sample5   control         5          0hr  data/hic/0hr_3_1_chr1.hic</span></span>
+<span><span class="co">#&gt; ...      ...       ...       ...          ...                        ...</span></span>
+<span><span class="co">#&gt; 8   sample8  treatment         2         72hr data/hic/72hr_1_2_chr1.hic</span></span>
+<span><span class="co">#&gt; 9   sample9  treatment         3         72hr data/hic/72hr_2_1_chr1.hic</span></span>
+<span><span class="co">#&gt; 10  sample10 treatment         4         72hr data/hic/72hr_2_2_chr1.hic</span></span>
+<span><span class="co">#&gt; 11  sample11 treatment         5         72hr data/hic/72hr_3_1_chr1.hic</span></span>
+<span><span class="co">#&gt; 12  sample12 treatment         6         72hr data/hic/72hr_3_2_chr1.hic</span></span></code></pre></div>
 <p>Since we want a count matrix with a single value for each 5 Kb loop
 pixel and <code>.hic</code> file, the <code><a href="http://ericscottdavis.com/mariner/reference/pullHicPixels.html" class="external-link">pullHicPixels()</a></code>
 function is what we should use with a <code>binSize</code> of 5 Kb:</p>
@@ -754,16 +741,16 @@ because it returns a single matrix for each interaction and
 <span><span class="co">#&gt; [2337,]                16</span></span>
 <span><span class="co">#&gt; [2338,]                10</span></span>
 <span><span class="co">#&gt; [2339,]                 7</span></span></code></pre></div>
+<p><img src="img/interactionMatrixFig.png" width="50%" style="display: block; margin: auto;"></p>
 <p>These counts are stored on-disk in an HDF5 file to conserve R-memory
-usage. But we will talk more about this later. For now, we have
-everything we need to create a <code>DESeqDataSet</code> and run
-<code><a href="https://rdrr.io/pkg/DESeq2/man/DESeq.html" class="external-link">DESeq()</a></code>.</p>
+usage. But we will talk more about this later. For now, we can create a
+<code>DESeqDataSet</code> and run <code><a href="https://rdrr.io/pkg/DESeq2/man/DESeq.html" class="external-link">DESeq()</a></code>:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/mikelove/DESeq2" class="external-link">DESeq2</a></span><span class="op">)</span></span>
 <span><span class="va">dds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/DESeqDataSet.html" class="external-link">DESeqDataSetFromMatrix</a></span><span class="op">(</span></span>
 <span>  countData<span class="op">=</span><span class="fu">counts</span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span>,</span>
 <span>  colData<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">colData</a></span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span>, <span class="va">samples</span><span class="op">)</span>,</span>
-<span>  design<span class="op">=</span><span class="op">~</span><span class="va">techrep</span><span class="op">+</span><span class="va">biorep</span><span class="op">+</span><span class="va">PMAtreatment</span></span>
+<span>  design<span class="op">=</span><span class="op">~</span><span class="va">replicate</span><span class="op">+</span><span class="va">condition</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">dds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/DESeq.html" class="external-link">DESeq</a></span><span class="op">(</span><span class="va">dds</span><span class="op">)</span></span>
 <span><span class="va">dds</span></span>
@@ -772,21 +759,21 @@ everything we need to create a <code>DESeqDataSet</code> and run
 <span><span class="co">#&gt; metadata(1): version</span></span>
 <span><span class="co">#&gt; assays(4): counts mu H cooks</span></span>
 <span><span class="co">#&gt; rownames: NULL</span></span>
-<span><span class="co">#&gt; rowData names(34): baseMean baseVar ... deviance maxCooks</span></span>
+<span><span class="co">#&gt; rowData names(42): baseMean baseVar ... deviance maxCooks</span></span>
 <span><span class="co">#&gt; colnames(12): 0hr_1_1_chr1.hic 0hr_1_2_chr1.hic ... 72hr_3_1_chr1.hic</span></span>
 <span><span class="co">#&gt;   72hr_3_2_chr1.hic</span></span>
-<span><span class="co">#&gt; colData names(9): files fileNames ... filepath sizeFactor</span></span></code></pre></div>
+<span><span class="co">#&gt; colData names(8): files fileNames ... filepath sizeFactor</span></span></code></pre></div>
 <p>Get shrunken results:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/lfcShrink.html" class="external-link">lfcShrink</a></span><span class="op">(</span><span class="va">dds</span>, coef<span class="op">=</span><span class="st">"PMAtreatment_72hr_vs_0hr"</span>, type<span class="op">=</span><span class="st">"apeglm"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/lfcShrink.html" class="external-link">lfcShrink</a></span><span class="op">(</span><span class="va">dds</span>, coef<span class="op">=</span><span class="st">"condition_treatment_vs_control"</span>, type<span class="op">=</span><span class="st">"apeglm"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; out of 2336 with nonzero total read count</span></span>
 <span><span class="co">#&gt; adjusted p-value &lt; 0.1</span></span>
-<span><span class="co">#&gt; LFC &gt; 0 (up)       : 37, 1.6%</span></span>
-<span><span class="co">#&gt; LFC &lt; 0 (down)     : 27, 1.2%</span></span>
+<span><span class="co">#&gt; LFC &gt; 0 (up)       : 24, 1%</span></span>
+<span><span class="co">#&gt; LFC &lt; 0 (down)     : 11, 0.47%</span></span>
 <span><span class="co">#&gt; outliers [1]       : 0, 0%</span></span>
-<span><span class="co">#&gt; low counts [2]     : 1042, 45%</span></span>
+<span><span class="co">#&gt; low counts [2]     : 861, 37%</span></span>
 <span><span class="co">#&gt; (mean count &lt; 3)</span></span>
 <span><span class="co">#&gt; [1] see 'cooksCutoff' argument of ?results</span></span>
 <span><span class="co">#&gt; [2] see 'independentFiltering' argument of ?results</span></span></code></pre></div>
@@ -797,7 +784,7 @@ everything we need to create a <code>DESeqDataSet</code> and run
 <p>or a PCA plot:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/varianceStabilizingTransformation.html" class="external-link">varianceStabilizingTransformation</a></span><span class="op">(</span><span class="va">dds</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/plotPCA.html" class="external-link">plotPCA</a></span><span class="op">(</span>intgroup <span class="op">=</span> <span class="st">"PMAtreatment"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/plotPCA.html" class="external-link">plotPCA</a></span><span class="op">(</span>intgroup<span class="op">=</span><span class="st">"condition"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>aspect.ratio <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-19-1.png" width="700"></p>
 <p>We can add these results from <code>DESeq2</code> to our
@@ -859,17 +846,17 @@ to expand square regions around each central pixel.</p>
 <span><span class="co">#&gt;   [2339]      chr1 172425000-172480000 ---      chr1 172695000-172750000 |</span></span>
 <span><span class="co">#&gt;           baseMean log2FoldChange     lfcSE    pvalue      padj</span></span>
 <span><span class="co">#&gt;          &lt;numeric&gt;      &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt;</span></span>
-<span><span class="co">#&gt;      [1]   9.56156     -0.1705369  0.252002 0.2635900  0.569331</span></span>
-<span><span class="co">#&gt;      [2]   6.12458     -0.0938578  0.246759 0.4912155  0.752228</span></span>
-<span><span class="co">#&gt;      [3]   6.63638     -0.2478541  0.313053 0.1299725  0.425493</span></span>
-<span><span class="co">#&gt;      [4]   7.12104     -0.2191735  0.290885 0.1667762  0.460146</span></span>
-<span><span class="co">#&gt;      [5]   7.91831     -0.4337891  0.424633 0.0362829  0.235846</span></span>
+<span><span class="co">#&gt;      [1]   9.56156     -0.1348939  0.240144 0.3056335  0.626778</span></span>
+<span><span class="co">#&gt;      [2]   6.12458     -0.0711993  0.232172 0.5406117  0.797508</span></span>
+<span><span class="co">#&gt;      [3]   6.63638     -0.2013501  0.293410 0.1451872  0.485955</span></span>
+<span><span class="co">#&gt;      [4]   7.12104     -0.1768913  0.273015 0.1888885  0.525269</span></span>
+<span><span class="co">#&gt;      [5]   7.91831     -0.3024159  0.386043 0.0560362  0.333280</span></span>
 <span><span class="co">#&gt;      ...       ...            ...       ...       ...       ...</span></span>
-<span><span class="co">#&gt;   [2335]   1.10863    -0.00822639  0.276286 0.8930752        NA</span></span>
-<span><span class="co">#&gt;   [2336]   1.24407     0.14191874  0.328953 0.0352391        NA</span></span>
-<span><span class="co">#&gt;   [2337]   9.81880     0.14960593  0.242716 0.3190084  0.616591</span></span>
-<span><span class="co">#&gt;   [2338]   4.57586     0.08777030  0.255997 0.4943959  0.753424</span></span>
-<span><span class="co">#&gt;   [2339]   7.59337     0.06616084  0.232405 0.6317272  0.827952</span></span>
+<span><span class="co">#&gt;   [2335]   1.10863     -0.0057729  0.256525  0.857400        NA</span></span>
+<span><span class="co">#&gt;   [2336]   1.24407      0.0572758  0.265982  0.122260        NA</span></span>
+<span><span class="co">#&gt;   [2337]   9.81880      0.1302846  0.236918  0.321978  0.648978</span></span>
+<span><span class="co">#&gt;   [2338]   4.57586      0.0652708  0.238179  0.546254  0.799330</span></span>
+<span><span class="co">#&gt;   [2339]   7.59337      0.0545398  0.222542  0.649178  0.851997</span></span>
 <span><span class="co">#&gt;   -------</span></span>
 <span><span class="co">#&gt;   regions: 3596 ranges and 0 metadata columns</span></span>
 <span><span class="co">#&gt;   seqinfo: 1 sequence from an unspecified genome; no seqlengths</span></span></code></pre></div>
@@ -925,10 +912,11 @@ dimension. The data is stored in an HDF5 file that is accessible with
 the <code>DelayedArray</code> package. This allows us to use this object
 as if it were held in R’s memory, but only loading data as needed
 (i.e. when operations are applied to it).</p>
+<p><img src="img/interactionArrayFig.png" width="75%" style="display: block; margin: auto;"></p>
 <p>We can then aggregate this array with the fast and efficient
 <code><a href="http://ericscottdavis.com/mariner/reference/aggHicMatrices.html" class="external-link">aggHicMatrices()</a></code> function. This allows you to aggregate by
 interactions, files, or all.</p>
-<p><img src="img/aggMatFig.png" width="50%" style="display: block; margin: auto;"></p>
+<p><img src="img/aggMatFigAlt.png" width="75%" style="display: block; margin: auto;"></p>
 <p>Here we will combine all interactions for each Hi-C file by setting
 <code>by="files"</code>:</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
@@ -1016,21 +1004,24 @@ support our analysis.</p>
 <span></span>
 <span><span class="co">## Find common scale for gained/lost</span></span>
 <span><span class="va">gained_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">gained_ctr</span>, <span class="va">gained_trt</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">lost_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">lost_ctr</span>, <span class="va">lost_trt</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co">## Visualize</span></span>
-<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_ctr</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span>
-<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_trt</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span>
-<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">lost_ctr</span>, zrange<span class="op">=</span><span class="va">lost_scale</span><span class="op">)</span></span>
+<span><span class="va">lost_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">lost_ctr</span>, <span class="va">lost_trt</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Then we can visualize the gained loops in control and treatment:</p>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_ctr</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_trt</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-30-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-30-2.png" width="50%"></p>
+<p>And the lost loops in control and treatment:</p>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">lost_ctr</span>, zrange<span class="op">=</span><span class="va">lost_scale</span><span class="op">)</span></span>
 <span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">lost_trt</span>, zrange<span class="op">=</span><span class="va">lost_scale</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-29-1.png" width="25%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-29-2.png" width="25%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-29-3.png" width="25%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-29-4.png" width="25%"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-31-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-31-2.png" width="50%"></p>
 <p>In the <a href="vis_with_pg">final section of this workshop</a> we
 will take these plots and visualize them on a single page with
 labels.</p>
 <p><code>mariner</code> includes the <code>calcApa()</code> function,
 which wraps several of these steps together to simply your workflow. For
 example, the code below can be used to accomplish the same task.</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Identify gained/lost loops</span></span>
 <span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">rowData</a></span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span></span>
 <span><span class="va">gained</span> <span class="op">&lt;-</span> <span class="va">pixels</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;=</span> <span class="fl">0.1</span> <span class="op">&amp;</span> <span class="va">res</span><span class="op">$</span><span class="va">log2FoldChange</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">]</span></span>
@@ -1061,14 +1052,17 @@ example, the code below can be used to accomplish the same task.</p>
 <span></span>
 <span><span class="co">## Find common scale for gained/lost</span></span>
 <span><span class="va">gained_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">gained_ctr</span>, <span class="va">gained_trt</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">lost_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">lost_ctr</span>, <span class="va">lost_trt</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co">## Visualize</span></span>
-<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_ctr</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span>
-<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_trt</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span>
-<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">lost_ctr</span>, zrange<span class="op">=</span><span class="va">lost_scale</span><span class="op">)</span></span>
+<span><span class="va">lost_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">lost_ctr</span>, <span class="va">lost_trt</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Then we can visualize the gained loops in control and treatment:</p>
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_ctr</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_trt</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-33-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-33-2.png" width="50%"></p>
+<p>And the lost loops in control and treatment:</p>
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">lost_ctr</span>, zrange<span class="op">=</span><span class="va">lost_scale</span><span class="op">)</span></span>
 <span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">lost_trt</span>, zrange<span class="op">=</span><span class="va">lost_scale</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-30-1.png" width="25%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-30-2.png" width="25%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-30-3.png" width="25%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-30-4.png" width="25%"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-34-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-34-2.png" width="50%"></p>
 <p>Running each step separately allows you to have the maximum amount of
 control over the settings which improves efficiency and performance. It
 also gives you more flexibility to allow custom functions that haven’t
@@ -1083,7 +1077,7 @@ encompassed by the differential loops so we can visualize how the
 domains are changing.</p>
 <p>We can build a helper function that makes TAD with a buffer on either
 side from the loops.</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Write a helper function to convert</span></span>
 <span><span class="co">## loops into TADs</span></span>
 <span><span class="va">makeTadsFromLoops</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
@@ -1099,13 +1093,13 @@ side from the loops.</p>
 <span><span class="va">tads</span> <span class="op">&lt;-</span> <span class="fu">makeTadsFromLoops</span><span class="op">(</span><span class="va">mergedLoops</span><span class="op">)</span></span></code></pre></div>
 <p>Then we can filter these tads for those that are gained after 72
 hours of PMA treatment.</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Identify gained TADs</span></span>
 <span><span class="va">gained</span> <span class="op">&lt;-</span> <span class="va">tads</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;=</span> <span class="fl">0.1</span> <span class="op">&amp;</span> <span class="va">res</span><span class="op">$</span><span class="va">log2FoldChange</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
 <p>The <code><a href="http://ericscottdavis.com/mariner/reference/pullHicMatrices.html" class="external-link">pullHicMatrices()</a></code> function can be used to extract
 count matrices for these tads at a given resolution (in this case 5
 Kb).</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Pull TAD regions</span></span>
 <span><span class="va">mats</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pullHicMatrices.html" class="external-link">pullHicMatrices</a></span><span class="op">(</span></span>
 <span>  x<span class="op">=</span><span class="va">gained</span>,</span>
@@ -1118,20 +1112,20 @@ Kb).</p>
 <span><span class="co">#&gt; <span style="color: #0000BB;">ℹ</span> Use `binPairs()` or `snapToBins()` for more binning options.</span></span></code></pre></div>
 <p>Because each region is a different size, an irregular or jagged array
 object is returned:</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mats</span></span>
 <span><span class="co">#&gt; class: InteractionJaggedArray</span></span>
-<span><span class="co">#&gt; dim: 37 interaction(s), 6 file(s), variable count matrix(es)</span></span>
+<span><span class="co">#&gt; dim: 24 interaction(s), 6 file(s), variable count matrix(es)</span></span>
 <span><span class="co">#&gt; metadata(3): binSize, norm, matrix</span></span>
 <span><span class="co">#&gt; colData: </span></span>
 <span><span class="co">#&gt; colData names(2): files, fileNames</span></span>
-<span><span class="co">#&gt; HDF5: /tmp/RtmpW6Lwbn/file3c4769580d9.h5</span></span></code></pre></div>
+<span><span class="co">#&gt; HDF5: /tmp/Rtmpfcifzh/file4142dd39069.h5</span></span></code></pre></div>
 <p>The <code>counts()</code> function gives access to these count
 matrices, which can be realized with <code><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list()</a></code> if
 needed.</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">counts</span><span class="op">(</span><span class="va">mats</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &lt;n x m x 37 x 6&gt; JaggedArray:</span></span>
+<span><span class="co">#&gt; &lt;n x m x 24 x 6&gt; JaggedArray:</span></span>
 <span><span class="co">#&gt; ,,1,1</span></span>
 <span><span class="co">#&gt; &lt;55 x 55&gt; matrix</span></span>
 <span><span class="co">#&gt;        [,1]  [,2]  [,3] ... [,54] [,55]</span></span>
@@ -1143,14 +1137,14 @@ needed.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ...</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ,,37,6</span></span>
-<span><span class="co">#&gt; &lt;25 x 25&gt; matrix</span></span>
-<span><span class="co">#&gt;        [,1]  [,2]  [,3] ... [,24] [,25]</span></span>
-<span><span class="co">#&gt;  [1,]   267    72    37   .     5     0</span></span>
-<span><span class="co">#&gt;  [2,]    72   283    63   .     1     3</span></span>
+<span><span class="co">#&gt; ,,24,6</span></span>
+<span><span class="co">#&gt; &lt;45 x 45&gt; matrix</span></span>
+<span><span class="co">#&gt;        [,1]  [,2]  [,3] ... [,44] [,45]</span></span>
+<span><span class="co">#&gt;  [1,]   176    32    14   .     1     4</span></span>
+<span><span class="co">#&gt;  [2,]    32   213    32   .     1     3</span></span>
 <span><span class="co">#&gt;   ...     .     .     .   .     .     .</span></span>
-<span><span class="co">#&gt; [24,]     5     1     0   .   153    26</span></span>
-<span><span class="co">#&gt; [25,]     0     3     7   .    26   269</span></span></code></pre></div>
+<span><span class="co">#&gt; [44,]     1     1     0   .   179    30</span></span>
+<span><span class="co">#&gt; [45,]     4     3     1   .    30   251</span></span></code></pre></div>
 <p>For an aggregate TAD analysis, we need to make these irregular arrays
 the same size. The <code><a href="http://ericscottdavis.com/mariner/reference/regularize.html" class="external-link">regularize()</a></code> function resizes each
 matrix to the rows and column dimensions specified in the
@@ -1158,148 +1152,26 @@ matrix to the rows and column dimensions specified in the
 each matrix to its total signal so that each matrix contributes the same
 relative signal to the aggregation. The result is an
 <code>InteractionArray</code> as we’ve seen in previous sections.</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Convert to regular array</span></span>
 <span><span class="va">reg</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/regularize.html" class="external-link">regularize</a></span><span class="op">(</span></span>
 <span>  x<span class="op">=</span><span class="va">mats</span>,</span>
 <span>  ndim<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">100</span><span class="op">)</span>,</span>
 <span>  nBlocks<span class="op">=</span><span class="fl">10</span>,</span>
 <span>  scale<span class="op">=</span><span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 1/10 of file 1/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... Loading required namespace: fields</span></span>
-<span><span class="co">#&gt; OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 2/10 of file 1/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 3/10 of file 1/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 4/10 of file 1/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 5/10 of file 1/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 6/10 of file 1/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 7/10 of file 1/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 8/10 of file 1/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 9/10 of file 1/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 10/10 of file 1/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 1/10 of file 2/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 2/10 of file 2/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 3/10 of file 2/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 4/10 of file 2/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 5/10 of file 2/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 6/10 of file 2/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 7/10 of file 2/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 8/10 of file 2/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 9/10 of file 2/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 10/10 of file 2/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 1/10 of file 3/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 2/10 of file 3/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 3/10 of file 3/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 4/10 of file 3/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 5/10 of file 3/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 6/10 of file 3/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 7/10 of file 3/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 8/10 of file 3/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 9/10 of file 3/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 10/10 of file 3/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 1/10 of file 4/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 2/10 of file 4/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 3/10 of file 4/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 4/10 of file 4/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 5/10 of file 4/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 6/10 of file 4/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 7/10 of file 4/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 8/10 of file 4/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 9/10 of file 4/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 10/10 of file 4/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 1/10 of file 5/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 2/10 of file 5/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 3/10 of file 5/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 4/10 of file 5/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 5/10 of file 5/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 6/10 of file 5/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 7/10 of file 5/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 8/10 of file 5/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 9/10 of file 5/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 10/10 of file 5/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 1/10 of file 6/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 2/10 of file 6/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 3/10 of file 6/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 4/10 of file 6/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 5/10 of file 6/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 6/10 of file 6/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 7/10 of file 6/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 8/10 of file 6/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 9/10 of file 6/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span>
-<span><span class="co">#&gt; / Reading and realizing block 10/10 of file 6/6 ... OK</span></span>
-<span><span class="co">#&gt; \ Processing it ... OK</span></span></code></pre></div>
+<span><span class="op">)</span></span></code></pre></div>
 <p>The regularized array can then be aggregated and visualized like
 before:</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Aggregate</span></span>
 <span><span class="va">agg</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/aggHicMatrices.html" class="external-link">aggHicMatrices</a></span><span class="op">(</span><span class="va">reg</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">## Visualize</span></span>
-<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">agg</span>, zrange<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.025</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; MatrixPlot[MatrixPlot1]</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-37-1.png" width="700"></p>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">agg</span>, zrange<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.025</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-41-1.png" width="700"></p>
 <p>We can use the wrapper function <code><a href="http://ericscottdavis.com/mariner/reference/pileupDomains.html" class="external-link">pileupDomains()</a></code> to carry
 out these steps for us:</p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Identify gained TADs</span></span>
 <span><span class="va">gained</span> <span class="op">&lt;-</span> <span class="va">tads</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;=</span> <span class="fl">0.1</span> <span class="op">&amp;</span> <span class="va">res</span><span class="op">$</span><span class="va">log2FoldChange</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
@@ -1324,7 +1196,7 @@ out these steps for us:</p>
 <span><span class="co">## Visualize</span></span>
 <span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_ctr_tads</span>, zrange<span class="op">=</span><span class="va">gained_tad_scale</span><span class="op">)</span></span>
 <span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_trt_tads</span>, zrange<span class="op">=</span><span class="va">gained_tad_scale</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-38-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-38-2.png" width="50%"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-42-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-42-2.png" width="50%"></p>
 </div>
 </div>
 <div class="section level2">
@@ -1338,16 +1210,16 @@ we will use <code>plotgardener</code> to programmatically place our APA
 plots on a page and add text labels.</p>
 <p>To visualize multiple plots with <code>plotgardener</code> you start
 by creating a page:</p>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://phanstiellab.github.io/plotgardener" class="external-link">plotgardener</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">## Create page</span></span>
 <span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/pageCreate.html" class="external-link">pageCreate</a></span><span class="op">(</span>width<span class="op">=</span><span class="fl">3</span>, height<span class="op">=</span><span class="fl">3</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-40-1.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-44-1.png" width="700"></p>
 <p>We can pass additional parameters to the <code><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix()</a></code>
 function specifying where we would like these to be placed on the
 page.</p>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## APA plots</span></span>
 <span><span class="va">gainedApa</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span></span>
 <span>  data<span class="op">=</span><span class="va">gained_ctr</span>,</span>
@@ -1381,10 +1253,10 @@ page.</p>
 <span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
 <span>  height<span class="op">=</span><span class="fl">0.95</span>,</span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-41-1.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-45-1.png" width="700"></p>
 <p>We can use annotation functions to add scale legends.</p>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">## Plot heatmap legends</span></span>
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## APA heatmap legends</span></span>
 <span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/annoHeatmapLegend.html" class="external-link">annoHeatmapLegend</a></span><span class="op">(</span></span>
 <span>  plot<span class="op">=</span><span class="va">gainedApa</span>,</span>
 <span>  orientation<span class="op">=</span><span class="st">'h'</span>,</span>
@@ -1401,9 +1273,9 @@ page.</p>
 <span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
 <span>  height<span class="op">=</span><span class="fl">0.1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-42-1.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-46-1.png" width="700"></p>
 <p>and text labels:</p>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Plot text labels</span></span>
 <span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotText.html" class="external-link">plotText</a></span><span class="op">(</span></span>
 <span>  label<span class="op">=</span><span class="st">"72hr-loops"</span>,</span>
@@ -1431,15 +1303,185 @@ page.</p>
 <span>  rot<span class="op">=</span><span class="fl">90</span>,</span>
 <span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"center"</span>, <span class="st">"bottom"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-43-1.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-47-1.png" width="700"></p>
 <p>When the plot is to your liking, you can remove the guides on the
 page:</p>
-<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/pageGuideHide.html" class="external-link">pageGuideHide</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-44-1.png" width="700"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-44-2.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-48-1.png" width="700"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-48-2.png" width="700"></p>
 <p><code>plotgardener</code> is a very useful tool for making
 publication-quality genomic figures. Visit the <a href="https://phanstiellab.github.io/plotgardener/" class="external-link">website</a> to learn
 more about what you can do with <code>plotgardener</code>.</p>
+<p>For example, we could plot an example loop beside these APA
+plots:</p>
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Create page</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/pageCreate.html" class="external-link">pageCreate</a></span><span class="op">(</span>width<span class="op">=</span><span class="fl">6</span>, height<span class="op">=</span><span class="fl">3</span>, showGuides<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-49-1.png" width="700"></p>
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co">## APA plots</span></span>
+<span><span class="va">gainedApa</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span></span>
+<span>  data<span class="op">=</span><span class="va">gained_ctr</span>,</span>
+<span>  zrange<span class="op">=</span><span class="va">gained_scale</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span>  height<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span></span>
+<span>  data<span class="op">=</span><span class="va">gained_trt</span>,</span>
+<span>  zrange<span class="op">=</span><span class="va">gained_scale</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span>  height<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span><span class="op">)</span></span>
+<span><span class="va">lostApa</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span></span>
+<span>  data<span class="op">=</span><span class="va">lost_ctr</span>,</span>
+<span>  zrange<span class="op">=</span><span class="va">lost_scale</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span>  height<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span></span>
+<span>  data<span class="op">=</span><span class="va">lost_trt</span>,</span>
+<span>  zrange<span class="op">=</span><span class="va">lost_scale</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span>  height<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## APA heatmap legends</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/annoHeatmapLegend.html" class="external-link">annoHeatmapLegend</a></span><span class="op">(</span></span>
+<span>  plot<span class="op">=</span><span class="va">gainedApa</span>,</span>
+<span>  orientation<span class="op">=</span><span class="st">'h'</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">2.5</span>,</span>
+<span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span>  height<span class="op">=</span><span class="fl">0.1</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/annoHeatmapLegend.html" class="external-link">annoHeatmapLegend</a></span><span class="op">(</span></span>
+<span>  plot<span class="op">=</span><span class="va">lostApa</span>,</span>
+<span>  orientation<span class="op">=</span><span class="st">'h'</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">2.5</span>,</span>
+<span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span>  height<span class="op">=</span><span class="fl">0.1</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Plot text labels</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotText.html" class="external-link">plotText</a></span><span class="op">(</span></span>
+<span>  label<span class="op">=</span><span class="st">"72hr-loops"</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">0.975</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">0.45</span>,</span>
+<span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"center"</span>, <span class="st">"bottom"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotText.html" class="external-link">plotText</a></span><span class="op">(</span></span>
+<span>  label<span class="op">=</span><span class="st">"0hr-loops"</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">1.975</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">0.45</span>,</span>
+<span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"center"</span>, <span class="st">"bottom"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotText.html" class="external-link">plotText</a></span><span class="op">(</span></span>
+<span>  label<span class="op">=</span><span class="st">"0hr-hic"</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">0.45</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">0.975</span>,</span>
+<span>  rot<span class="op">=</span><span class="fl">90</span>,</span>
+<span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"center"</span>, <span class="st">"bottom"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotText.html" class="external-link">plotText</a></span><span class="op">(</span></span>
+<span>  label<span class="op">=</span><span class="st">"72hr-hic"</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">0.45</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">1.975</span>,</span>
+<span>  rot<span class="op">=</span><span class="fl">90</span>,</span>
+<span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"center"</span>, <span class="st">"bottom"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Plot Hi-C example loop</span></span>
+<span><span class="va">hicPlot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotHicSquare.html" class="external-link">plotHicSquare</a></span><span class="op">(</span></span>
+<span>  <span class="co">## Path to .hic file</span></span>
+<span>  data<span class="op">=</span><span class="va">hicFiles</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
+<span>  </span>
+<span>  <span class="co">## Loci</span></span>
+<span>  chrom<span class="op">=</span><span class="st">"chr1"</span>,</span>
+<span>  chromstart<span class="op">=</span><span class="fl">213.9e6</span>,</span>
+<span>  chromend<span class="op">=</span><span class="fl">215e6</span>,</span>
+<span>  </span>
+<span>  <span class="co">## Hi-C params</span></span>
+<span>  resolution<span class="op">=</span><span class="fl">10e3</span>,</span>
+<span>  zrange<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span>,</span>
+<span>  norm<span class="op">=</span><span class="st">"KR"</span>,</span>
+<span>  half<span class="op">=</span><span class="st">"top"</span>,</span>
+<span>  </span>
+<span>  <span class="co">## Placement on page</span></span>
+<span>  x<span class="op">=</span><span class="fl">3</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span>  width<span class="op">=</span><span class="fl">2</span>,</span>
+<span>  height<span class="op">=</span><span class="fl">2</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotHicSquare.html" class="external-link">plotHicSquare</a></span><span class="op">(</span></span>
+<span>  <span class="co">## Path to .hic file</span></span>
+<span>  data<span class="op">=</span><span class="va">hicFiles</span><span class="op">[</span><span class="fl">7</span><span class="op">]</span>,</span>
+<span>  </span>
+<span>  <span class="co">## Loci</span></span>
+<span>  chrom<span class="op">=</span><span class="st">"chr1"</span>,</span>
+<span>  chromstart<span class="op">=</span><span class="fl">213.9e6</span>,</span>
+<span>  chromend<span class="op">=</span><span class="fl">215e6</span>,</span>
+<span>  </span>
+<span>  <span class="co">## Plotting params</span></span>
+<span>  resolution<span class="op">=</span><span class="fl">10e3</span>,</span>
+<span>  zrange<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">40</span><span class="op">)</span>,</span>
+<span>  norm<span class="op">=</span><span class="st">"KR"</span>,</span>
+<span>  half<span class="op">=</span><span class="st">"bottom"</span>,</span>
+<span>  </span>
+<span>  <span class="co">## Placement on page</span></span>
+<span>  x<span class="op">=</span><span class="fl">3</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span>  width<span class="op">=</span><span class="fl">2</span>,</span>
+<span>  height<span class="op">=</span><span class="fl">2</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Genome coordinate label</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/annoGenomeLabel.html" class="external-link">annoGenomeLabel</a></span><span class="op">(</span></span>
+<span>  plot<span class="op">=</span><span class="va">hicPlot</span>,</span>
+<span>  scale<span class="op">=</span><span class="st">"Mb"</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">3</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">2.5</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Hi-C heatmap legend</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/annoHeatmapLegend.html" class="external-link">annoHeatmapLegend</a></span><span class="op">(</span></span>
+<span>  plot<span class="op">=</span><span class="va">hicPlot</span>,</span>
+<span>  orientation<span class="op">=</span><span class="st">'v'</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">5.05</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span>  width<span class="op">=</span><span class="fl">0.1</span>,</span>
+<span>  height<span class="op">=</span><span class="fl">1</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Plot title &amp; half labels</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotText.html" class="external-link">plotText</a></span><span class="op">(</span></span>
+<span>  label<span class="op">=</span><span class="st">"Example Loop; 10Kb bins"</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">4</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">0.45</span>,</span>
+<span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"center"</span>, <span class="st">"bottom"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotText.html" class="external-link">plotText</a></span><span class="op">(</span></span>
+<span>  label<span class="op">=</span><span class="st">"0hrs"</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">3.05</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">0.55</span>,</span>
+<span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"left"</span>, <span class="st">"top"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotText.html" class="external-link">plotText</a></span><span class="op">(</span></span>
+<span>  label<span class="op">=</span><span class="st">"72hrs"</span>,</span>
+<span>  x<span class="op">=</span><span class="fl">4.95</span>,</span>
+<span>  y<span class="op">=</span><span class="fl">2.45</span>,</span>
+<span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"right"</span>, <span class="st">"bottom"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-49-2.png" width="700"></p>
 </div>
   </div>
 
