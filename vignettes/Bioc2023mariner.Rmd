@@ -121,19 +121,58 @@ programmatically visualizing genomic data.
 
 ## Overview of Hi-C data
 
-TODO
+<iframe src="https://ericscottdavis.com/HowToHic" style="border: none; width: 100%; height: 500px;"></iframe>
 
-Topics to cover:
+### Terminology 
 
-* Terminology (loops, anchors, pixels, resolution, diagonal)
-* How to read a Hi-C map
+* *anchors*: the genomic loci (genomic ranges) that make
+up an _interaction_.
+
+* *interactions*: a pair of genomic loci (genomic ranges)
+that may be in contact.
+
+* *pixel*: a two-dimensional bin that represents
+the _interaction_ between two fixed-width genomic loci.
+
+* *contact frequency*: the number of Hi-C reads assigned
+to a pixel.
+
+* *loop*: a _pixel_ that is enriched for _contact frequency_
+compared to its local background. Biologically, a loop
+represents a point of frequent of sustained contact between
+genomic loci.
+
+* *the diagonal*: points of self-interaction along the Hi-C
+matrix.
+
+* *upper triangular*: the portion of the Hi-C matrix above 
+_the diagonal_. _Interactions_ where the first _anchor_
+is less than the second _anchor_ appear here.
+
+* *lower triangular*: the portion of the Hi-C matrix below
+_the diagonal_. _Interactions_ where the first _anchor_
+is greater than the second _anchor_ appear here.
+
+* *resolution*: the ability to distinguish between two
+neighboring points on a Hi-C matrix. The higher the
+_resolution_ the more accurate the contact between
+pairs of loci.
+
+* *binSize*: Hi-C reads are quantified along the genome
+in regular bins. The size of these bins determines the
+_resolution_ of the Hi-C matrix. Larger _bins_ lead
+to lower _resolution_ while smaller _bins_ mean higher
+_resolution_. Since the quantification of reads into
+bins is time consuming, `.hic` files are processed at
+several pre-determined `binSizes` (also called 
+_resolutions_).
 
 ## Workshop datasets
 
 TODO
 
 Topics to cover:
-
+  
 * Biological question (megakaryocyte differentiation)
 * Hi-C files & replicate structure
 * Loop & TAD files
@@ -225,31 +264,31 @@ sources(mergedLoops)
 Each row of the `MergedGInteractions` object represents
 the selected interaction from each cluster of one or more
 interactions. To view all interactions in a cluster, you
-can use the `getPairClusters()` function:
+can use the `clusters()` function:
 
 ```{r}
-getPairClusters(mergedLoops[1500])
+clusters(mergedLoops[1500])
 ```
 
 Notice that it returns a `data.table` with a column appended to the
 end, `src`, indicating the source file of each interaction. All of the
 metadata for each specific interaction is also included. If you want
 to summarize one or more of these values for each cluster in the object,
-the `aggPairMcols()` function is handy.
+the `aggMetadata()` function is handy.
 
 ```{r}
-aggPairMcols(x=mergedLoops, columns="APScoreAvg", funs="mean")
+aggMetadata(x=mergedLoops, columns="APScoreAvg", funs="mean")
 ```
 
 Finally, we can subset these interactions by the source file
-using the `subsetBySource()` function. This function includes
+using the `sets()` function. This function includes
 optional parameters, `include` and `exclude`, which control which
 sources should be grouped in the output. By default a list of
 `MergedGInteractions` objects is returned for each source with
 interactions that belong exclusively to that source.
 
 ```{r}
-subsetBySource(x=mergedLoops) |>
+sets(x=mergedLoops) |>
   lapply(summary)
 ```
 
@@ -258,13 +297,13 @@ explicitly excluding the 0 and 6 hour time points, we can use the
 following code:
 
 ```{r}
-subsetBySource(x=mergedLoops, include="72hr", exclude=c("0hr", "6hr"))
+sets(x=mergedLoops, include="72hr", exclude=c("0hr", "6hr"))
 ```
 To find loops that were present at either 6 or 72 hrs, but not
 present at 0 hrs, we can exclude the 0hr time point:
 
 ```{r}
-subsetBySource(x=mergedLoops, exclude="0hr")
+sets(x=mergedLoops, exclude="0hr")
 ```
 
 *Exercise*: How could we change this code to find
@@ -272,7 +311,7 @@ transient loops, or loops that appeared after 6 hours of PMA
 treatment and dissolved after 72 hours of treatment?
 
 ```{r, results='hide', eval=FALSE, echo=FALSE}
-subsetBySource(x=mergedLoops, include="6hr", exclude=c("0hr", "72hr"))
+sets(x=mergedLoops, include="6hr", exclude=c("0hr", "72hr"))
 ```
 
 Now let's return to our differential looping analysis to
@@ -305,8 +344,8 @@ We can use `mariner` to create the count matrix by extracting
 unnormlized contact frequency between interactions for each
 Hi-C sample. First we read in the sample sheet containing
 Hi-C sample information and file paths each `.hic` file:
-
-```{r}
+  
+  ```{r}
 samples <- read.table("data/samples/samplesheet.txt", header=TRUE, colClasses="factor")
 samples <- as(samples, "DataFrame")
 samples
@@ -315,8 +354,8 @@ samples
 Since we want a count matrix with a single value for
 each 5 Kb loop pixel and `.hic` file, the `pullHicPixels()`
 function is what we should use with a `binSize` of 5 Kb:
-
-```{r}
+  
+  ```{r}
 ## Hi-C file paths from samplesheet
 hicFiles <- as.character(samples$filepath)
 
@@ -334,8 +373,8 @@ The object that results is called an `InteractionMatrix`
 because it returns a single matrix for each interaction
 and `.hic` file. You can access this matrix with the
 `counts()` accessor:
-
-```{r}
+  
+  ```{r}
 counts(pixels)
 ```
 
@@ -347,8 +386,8 @@ These counts are stored on-disk in an HDF5 file to
 conserve R-memory usage. But we will talk more about
 this later. For now, we can create a `DESeqDataSet` and
 run `DESeq()`:
-
-```{r, message=FALSE}
+  
+  ```{r, message=FALSE}
 library(DESeq2)
 dds <- DESeqDataSetFromMatrix(
   countData=counts(pixels),
@@ -360,20 +399,20 @@ dds
 ```
 
 Get shrunken results:
-
-```{r, message=FALSE}
+  
+  ```{r, message=FALSE}
 res <- lfcShrink(dds, coef="condition_treatment_vs_control", type="apeglm")
 summary(res)
 ```
 And inspect the results with an MA plot:
-
-```{r}
+  
+  ```{r}
 plotMA(res)
 ```
 
 or a PCA plot:
-
-```{r}
+  
+  ```{r}
 varianceStabilizingTransformation(dds) |>
   plotPCA(intgroup="condition") +
   ggplot2::theme(aspect.ratio = 1)
@@ -436,8 +475,8 @@ regions
 
 Then we can use the `pullHicMatrices()` function to extract
 11 x 11 matrices by setting the `binSize` to 5 Kb:
-
-```{r}
+  
+  ```{r}
 matrices <- pullHicMatrices(
   x=regions,
   files=hicFiles,
@@ -451,8 +490,8 @@ This results in an `InteractionArray` object that is very
 similar to the `InteractionMatrix` object except that it
 contains an array of pixel by Hi-C count matrices that
 are accessible with the `counts()` accessor:
-
-```{r}
+  
+  ```{r}
 counts(matrices)
 ```
 
@@ -501,8 +540,8 @@ trt <- apply(aggMats[,,7:12], c(1,2), sum, na.rm=TRUE)
 ```
 
 And visualize them with the `plotMatrix()` function:
-
-```{r, message=FALSE, fig.show="hold", out.width="50%"}
+  
+  ```{r, message=FALSE, fig.show="hold", out.width="50%"}
 plotMatrix(ctr)
 plotMatrix(trt)
 ```
@@ -691,8 +730,8 @@ mats <- pullHicMatrices(
 
 Because each region is a different size, an
 irregular or jagged array object is returned:
-
-```{r}
+  
+  ```{r}
 mats
 ```
 
@@ -1062,3 +1101,4 @@ plotText(
   just=c("right", "bottom")
 )
 ```
+
