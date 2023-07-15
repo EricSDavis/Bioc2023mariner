@@ -70,7 +70,7 @@
                         <h4 data-toc-skip class="author">Eric S. Davis,
 Sarah M. Parker, Manjari Kiran, Nicole Kramer, Douglas H. Phanstiel</h4>
             
-            <h4 data-toc-skip class="date">2023-07-11</h4>
+            <h4 data-toc-skip class="date">2023-07-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ericsdavis/Bioc2023mariner/blob/HEAD/vignettes/Bioc2023mariner.Rmd" class="external-link"><code>vignettes/Bioc2023mariner.Rmd</code></a></small>
       <div class="hidden name"><code>Bioc2023mariner.Rmd</code></div>
@@ -204,12 +204,47 @@ and <code>DESeq2</code>.</li>
 <div class="section level2">
 <h2 id="overview-of-hi-c-data">Overview of Hi-C data<a class="anchor" aria-label="anchor" href="#overview-of-hi-c-data"></a>
 </h2>
-<p>TODO</p>
-<p>Topics to cover:</p>
+<iframe src="https://ericscottdavis.com/HowToHic" style="border: none; width: 100%; height: 500px;">
+</iframe>
+<div class="section level3">
+<h3 id="terminology">Terminology<a class="anchor" aria-label="anchor" href="#terminology"></a>
+</h3>
 <ul>
-<li>Terminology (loops, anchors, pixels, resolution, diagonal)</li>
-<li>How to read a Hi-C map</li>
+<li><p><em>anchors</em>: the genomic loci (genomic ranges) that make up
+an <em>interaction</em>.</p></li>
+<li><p><em>interactions</em>: a pair of genomic loci (genomic ranges)
+that may be in contact.</p></li>
+<li><p><em>pixel</em>: a two-dimensional bin that represents the
+<em>interaction</em> between two fixed-width genomic loci.</p></li>
+<li><p><em>contact frequency</em>: the number of Hi-C reads assigned to
+a pixel.</p></li>
+<li><p><em>loop</em>: a <em>pixel</em> that is enriched for <em>contact
+frequency</em> compared to its local background. Biologically, a loop
+represents a point of frequent of sustained contact between genomic
+loci.</p></li>
+<li><p><em>the diagonal</em>: points of self-interaction along the Hi-C
+matrix.</p></li>
+<li><p><em>upper triangular</em>: the portion of the Hi-C matrix above
+<em>the diagonal</em>. <em>Interactions</em> where the first
+<em>anchor</em> is less than the second <em>anchor</em> appear
+here.</p></li>
+<li><p><em>lower triangular</em>: the portion of the Hi-C matrix below
+<em>the diagonal</em>. <em>Interactions</em> where the first
+<em>anchor</em> is greater than the second <em>anchor</em> appear
+here.</p></li>
+<li><p><em>resolution</em>: the ability to distinguish between two
+neighboring points on a Hi-C matrix. The higher the <em>resolution</em>
+the more accurate the contact between pairs of loci.</p></li>
+<li><p><em>binSize</em>: Hi-C reads are quantified along the genome in
+regular bins. The size of these bins determines the <em>resolution</em>
+of the Hi-C matrix. Larger <em>bins</em> lead to lower
+<em>resolution</em> while smaller <em>bins</em> mean higher
+<em>resolution</em>. Since the quantification of reads into bins is time
+consuming, <code>.hic</code> files are processed at several
+pre-determined <code>binSizes</code> (also called
+<em>resolutions</em>).</p></li>
 </ul>
+</div>
 </div>
 <div class="section level2">
 <h2 id="workshop-datasets">Workshop datasets<a class="anchor" aria-label="anchor" href="#workshop-datasets"></a>
@@ -414,9 +449,9 @@ returns the names of each input source file:</p>
 <p>Each row of the <code>MergedGInteractions</code> object represents
 the selected interaction from each cluster of one or more interactions.
 To view all interactions in a cluster, you can use the
-<code><a href="http://ericscottdavis.com/mariner/reference/getPairClusters.html" class="external-link">getPairClusters()</a></code> function:</p>
+<code><a href="http://ericscottdavis.com/mariner/reference/clusters.html" class="external-link">clusters()</a></code> function:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/getPairClusters.html" class="external-link">getPairClusters</a></span><span class="op">(</span><span class="va">mergedLoops</span><span class="op">[</span><span class="fl">1500</span><span class="op">]</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/clusters.html" class="external-link">clusters</a></span><span class="op">(</span><span class="va">mergedLoops</span><span class="op">[</span><span class="fl">1500</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [[1]]</span></span>
 <span><span class="co">#&gt;    seqnames1   start1     end1 width1 strand1 seqnames2   start2     end2</span></span>
 <span><span class="co">#&gt; 1:      chr1 94515000 94520000   5001       *      chr1 94795000 94800000</span></span>
@@ -438,10 +473,10 @@ To view all interactions in a cluster, you can use the
 appended to the end, <code>src</code>, indicating the source file of
 each interaction. All of the metadata for each specific interaction is
 also included. If you want to summarize one or more of these values for
-each cluster in the object, the <code><a href="http://ericscottdavis.com/mariner/reference/aggPairMcols.html" class="external-link">aggPairMcols()</a></code> function is
+each cluster in the object, the <code><a href="http://ericscottdavis.com/mariner/reference/aggMetadata.html" class="external-link">aggMetadata()</a></code> function is
 handy.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/aggPairMcols.html" class="external-link">aggPairMcols</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span>, columns<span class="op">=</span><span class="st">"APScoreAvg"</span>, funs<span class="op">=</span><span class="st">"mean"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/aggMetadata.html" class="external-link">aggMetadata</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span>, columns<span class="op">=</span><span class="st">"APScoreAvg"</span>, funs<span class="op">=</span><span class="st">"mean"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; MergedGInteractions object with 2339 interactions and 10 metadata columns:</span></span>
 <span><span class="co">#&gt;          seqnames1             ranges1     seqnames2             ranges2 |</span></span>
 <span><span class="co">#&gt;              &lt;Rle&gt;           &lt;IRanges&gt;         &lt;Rle&gt;           &lt;IRanges&gt; |</span></span>
@@ -499,13 +534,13 @@ handy.</p>
 <span><span class="co">#&gt;   regions: 3596 ranges and 0 metadata columns</span></span>
 <span><span class="co">#&gt;   seqinfo: 1 sequence from an unspecified genome; no seqlengths</span></span></code></pre></div>
 <p>Finally, we can subset these interactions by the source file using
-the <code><a href="http://ericscottdavis.com/mariner/reference/subsetBySource.html" class="external-link">subsetBySource()</a></code> function. This function includes
-optional parameters, <code>include</code> and <code>exclude</code>,
-which control which sources should be grouped in the output. By default
-a list of <code>MergedGInteractions</code> objects is returned for each
-source with interactions that belong exclusively to that source.</p>
+the <code><a href="http://ericscottdavis.com/mariner/reference/sets.html" class="external-link">sets()</a></code> function. This function includes optional
+parameters, <code>include</code> and <code>exclude</code>, which control
+which sources should be grouped in the output. By default a list of
+<code>MergedGInteractions</code> objects is returned for each source
+with interactions that belong exclusively to that source.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/subsetBySource.html" class="external-link">subsetBySource</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/sets.html" class="external-link">sets</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">summary</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $`0hr`</span></span>
 <span><span class="co">#&gt; [1] "MergedGInteractions object of length 400 with 9 metadata columns"</span></span>
@@ -514,12 +549,24 @@ source with interactions that belong exclusively to that source.</p>
 <span><span class="co">#&gt; [1] "MergedGInteractions object of length 357 with 9 metadata columns"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $`72hr`</span></span>
-<span><span class="co">#&gt; [1] "MergedGInteractions object of length 692 with 9 metadata columns"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "MergedGInteractions object of length 692 with 9 metadata columns"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`0hr_6hr`</span></span>
+<span><span class="co">#&gt; [1] "MergedGInteractions object of length 114 with 9 metadata columns"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`0hr_72hr`</span></span>
+<span><span class="co">#&gt; [1] "MergedGInteractions object of length 164 with 9 metadata columns"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`6hr_72hr`</span></span>
+<span><span class="co">#&gt; [1] "MergedGInteractions object of length 133 with 9 metadata columns"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $`0hr_6hr_72hr`</span></span>
+<span><span class="co">#&gt; [1] "MergedGInteractions object of length 479 with 9 metadata columns"</span></span></code></pre></div>
 <p>If we want to find loops that form <em>de</em> <em>novo</em> after 72
 hours explicitly excluding the 0 and 6 hour time points, we can use the
 following code:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/subsetBySource.html" class="external-link">subsetBySource</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span>, include<span class="op">=</span><span class="st">"72hr"</span>, exclude<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0hr"</span>, <span class="st">"6hr"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/sets.html" class="external-link">sets</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span>, include<span class="op">=</span><span class="st">"72hr"</span>, exclude<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0hr"</span>, <span class="st">"6hr"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; MergedGInteractions object with 692 interactions and 9 metadata columns:</span></span>
 <span><span class="co">#&gt;         seqnames1             ranges1     seqnames2             ranges2 |</span></span>
 <span><span class="co">#&gt;             &lt;Rle&gt;           &lt;IRanges&gt;         &lt;Rle&gt;           &lt;IRanges&gt; |</span></span>
@@ -579,7 +626,7 @@ following code:</p>
 <p>To find loops that were present at either 6 or 72 hrs, but not
 present at 0 hrs, we can exclude the 0hr time point:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/subsetBySource.html" class="external-link">subsetBySource</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span>, exclude<span class="op">=</span><span class="st">"0hr"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/sets.html" class="external-link">sets</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span>, exclude<span class="op">=</span><span class="st">"0hr"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; MergedGInteractions object with 1182 interactions and 9 metadata columns:</span></span>
 <span><span class="co">#&gt;          seqnames1             ranges1     seqnames2             ranges2 |</span></span>
 <span><span class="co">#&gt;              &lt;Rle&gt;           &lt;IRanges&gt;         &lt;Rle&gt;           &lt;IRanges&gt; |</span></span>
@@ -693,10 +740,10 @@ function is what we should use with a <code>binSize</code> of 5 Kb:</p>
 <span></span>
 <span><span class="co">## Extract pixels</span></span>
 <span><span class="va">pixels</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pullHicPixels.html" class="external-link">pullHicPixels</a></span><span class="op">(</span></span>
-<span>  x<span class="op">=</span><span class="va">mergedLoops</span>,</span>
-<span>  files<span class="op">=</span><span class="va">hicFiles</span>,</span>
-<span>  binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
-<span>  blockSize<span class="op">=</span><span class="fl">100e6</span></span>
+<span>x<span class="op">=</span><span class="va">mergedLoops</span>,</span>
+<span>files<span class="op">=</span><span class="va">hicFiles</span>,</span>
+<span>binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
+<span>blockSize<span class="op">=</span><span class="fl">100e6</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">pixels</span></span>
 <span><span class="co">#&gt; class: InteractionMatrix </span></span>
@@ -748,9 +795,9 @@ usage. But we will talk more about this later. For now, we can create a
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/mikelove/DESeq2" class="external-link">DESeq2</a></span><span class="op">)</span></span>
 <span><span class="va">dds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/DESeqDataSet.html" class="external-link">DESeqDataSetFromMatrix</a></span><span class="op">(</span></span>
-<span>  countData<span class="op">=</span><span class="fu">counts</span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span>,</span>
-<span>  colData<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">colData</a></span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span>, <span class="va">samples</span><span class="op">)</span>,</span>
-<span>  design<span class="op">=</span><span class="op">~</span><span class="va">replicate</span><span class="op">+</span><span class="va">condition</span></span>
+<span>countData<span class="op">=</span><span class="fu">counts</span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span>,</span>
+<span>colData<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">colData</a></span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span>, <span class="va">samples</span><span class="op">)</span>,</span>
+<span>design<span class="op">=</span><span class="op">~</span><span class="va">replicate</span><span class="op">+</span><span class="va">condition</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">dds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/DESeq.html" class="external-link">DESeq</a></span><span class="op">(</span><span class="va">dds</span><span class="op">)</span></span>
 <span><span class="va">dds</span></span>
@@ -784,8 +831,8 @@ usage. But we will talk more about this later. For now, we can create a
 <p>or a PCA plot:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/varianceStabilizingTransformation.html" class="external-link">varianceStabilizingTransformation</a></span><span class="op">(</span><span class="va">dds</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/plotPCA.html" class="external-link">plotPCA</a></span><span class="op">(</span>intgroup<span class="op">=</span><span class="st">"condition"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>aspect.ratio <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/plotPCA.html" class="external-link">plotPCA</a></span><span class="op">(</span>intgroup<span class="op">=</span><span class="st">"condition"</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>aspect.ratio <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-19-1.png" width="700"></p>
 <p>We can add these results from <code>DESeq2</code> to our
 <code>InteractionMatrix</code> object.</p>
@@ -865,10 +912,10 @@ extract 11 x 11 matrices by setting the <code>binSize</code> to 5
 Kb:</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">matrices</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pullHicMatrices.html" class="external-link">pullHicMatrices</a></span><span class="op">(</span></span>
-<span>  x<span class="op">=</span><span class="va">regions</span>,</span>
-<span>  files<span class="op">=</span><span class="va">hicFiles</span>,</span>
-<span>  binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
-<span>  blockSize<span class="op">=</span><span class="fl">100e6</span></span>
+<span>x<span class="op">=</span><span class="va">regions</span>,</span>
+<span>files<span class="op">=</span><span class="va">hicFiles</span>,</span>
+<span>binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
+<span>blockSize<span class="op">=</span><span class="fl">100e6</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">matrices</span></span>
 <span><span class="co">#&gt; class: InteractionArray </span></span>
@@ -1109,7 +1156,7 @@ Kb).</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Pairs are not binned to `binSize`.</span></span>
 <span><span class="co">#&gt; <span style="color: #0000BB;">ℹ</span> Snapping to binSize=5000, </span></span>
-<span><span class="co">#&gt; <span style="color: #0000BB;">ℹ</span> Use `binPairs()` or `snapToBins()` for more binning options.</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #0000BB;">ℹ</span> Use `assignToBins()` or `snapToBins()` for more binning options.</span></span></code></pre></div>
 <p>Because each region is a different size, an irregular or jagged array
 object is returned:</p>
 <div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
@@ -1119,7 +1166,7 @@ object is returned:</p>
 <span><span class="co">#&gt; metadata(3): binSize, norm, matrix</span></span>
 <span><span class="co">#&gt; colData: </span></span>
 <span><span class="co">#&gt; colData names(2): files, fileNames</span></span>
-<span><span class="co">#&gt; HDF5: /tmp/Rtmpfcifzh/file4142dd39069.h5</span></span></code></pre></div>
+<span><span class="co">#&gt; HDF5: /tmp/RtmpMYYV5M/file44317b44563.h5</span></span></code></pre></div>
 <p>The <code>counts()</code> function gives access to these count
 matrices, which can be realized with <code><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list()</a></code> if
 needed.</p>
