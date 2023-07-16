@@ -70,7 +70,7 @@
                         <h4 data-toc-skip class="author">Eric S. Davis,
 Sarah M. Parker, Manjari Kiran, Nicole Kramer, Douglas H. Phanstiel</h4>
             
-            <h4 data-toc-skip class="date">2023-07-15</h4>
+            <h4 data-toc-skip class="date">2023-07-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ericsdavis/Bioc2023mariner/blob/HEAD/vignettes/Bioc2023mariner.Rmd" class="external-link"><code>vignettes/Bioc2023mariner.Rmd</code></a></small>
       <div class="hidden name"><code>Bioc2023mariner.Rmd</code></div>
@@ -537,8 +537,8 @@ handy.</p>
 the <code><a href="http://ericscottdavis.com/mariner/reference/sets.html" class="external-link">sets()</a></code> function. This function includes optional
 parameters, <code>include</code> and <code>exclude</code>, which control
 which sources should be grouped in the output. By default a list of
-<code>MergedGInteractions</code> objects is returned for each source
-with interactions that belong exclusively to that source.</p>
+<code>MergedGInteractions</code> objects is returned that contains the
+set of interactions belonging to each combination of sources.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/sets.html" class="external-link">sets</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">summary</span><span class="op">)</span></span>
@@ -562,10 +562,27 @@ with interactions that belong exclusively to that source.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $`0hr_6hr_72hr`</span></span>
 <span><span class="co">#&gt; [1] "MergedGInteractions object of length 479 with 9 metadata columns"</span></span></code></pre></div>
+<p>We can visualize these sets with an <code>UpSet</code> plot:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://github.com/hms-dbmi/UpSetR" class="external-link">UpSetR</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Count loops in each set</span></span>
+<span><span class="va">loopSets</span> <span class="op">&lt;-</span> </span>
+<span>  <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/sets.html" class="external-link">sets</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">length</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Convert to an expression set for UpSetR</span></span>
+<span><span class="va">loopSets</span> <span class="op">&lt;-</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">loopSets</span>, <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">gsub</a></span><span class="op">(</span><span class="st">"_"</span>, <span class="st">"&amp;"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">loopSets</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/UpSetR/man/fromExpression.html" class="external-link">fromExpression</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Visualize</span></span>
+<span><span class="fu"><a href="https://rdrr.io/pkg/UpSetR/man/upset.html" class="external-link">upset</a></span><span class="op">(</span><span class="va">loopSets</span>, order.by<span class="op">=</span><span class="st">"freq"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
 <p>If we want to find loops that form <em>de</em> <em>novo</em> after 72
 hours explicitly excluding the 0 and 6 hour time points, we can use the
 following code:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/sets.html" class="external-link">sets</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span>, include<span class="op">=</span><span class="st">"72hr"</span>, exclude<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"0hr"</span>, <span class="st">"6hr"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; MergedGInteractions object with 692 interactions and 9 metadata columns:</span></span>
 <span><span class="co">#&gt;         seqnames1             ranges1     seqnames2             ranges2 |</span></span>
@@ -625,7 +642,7 @@ following code:</p>
 <span><span class="co">#&gt;   seqinfo: 1 sequence from an unspecified genome; no seqlengths</span></span></code></pre></div>
 <p>To find loops that were present at either 6 or 72 hrs, but not
 present at 0 hrs, we can exclude the 0hr time point:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/sets.html" class="external-link">sets</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">mergedLoops</span>, exclude<span class="op">=</span><span class="st">"0hr"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; MergedGInteractions object with 1182 interactions and 9 metadata columns:</span></span>
 <span><span class="co">#&gt;          seqnames1             ranges1     seqnames2             ranges2 |</span></span>
@@ -713,7 +730,7 @@ model to test.</p>
 extracting unnormlized contact frequency between interactions for each
 Hi-C sample. First we read in the sample sheet containing Hi-C sample
 information and file paths each <code>.hic</code> file:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.table</a></span><span class="op">(</span><span class="st">"data/samples/samplesheet.txt"</span>, header<span class="op">=</span><span class="cn">TRUE</span>, colClasses<span class="op">=</span><span class="st">"factor"</span><span class="op">)</span></span>
 <span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu">as</span><span class="op">(</span><span class="va">samples</span>, <span class="st">"DataFrame"</span><span class="op">)</span></span>
 <span><span class="va">samples</span></span>
@@ -734,16 +751,16 @@ information and file paths each <code>.hic</code> file:</p>
 <p>Since we want a count matrix with a single value for each 5 Kb loop
 pixel and <code>.hic</code> file, the <code><a href="http://ericscottdavis.com/mariner/reference/pullHicPixels.html" class="external-link">pullHicPixels()</a></code>
 function is what we should use with a <code>binSize</code> of 5 Kb:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Hi-C file paths from samplesheet</span></span>
 <span><span class="va">hicFiles</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">samples</span><span class="op">$</span><span class="va">filepath</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">## Extract pixels</span></span>
 <span><span class="va">pixels</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pullHicPixels.html" class="external-link">pullHicPixels</a></span><span class="op">(</span></span>
-<span>x<span class="op">=</span><span class="va">mergedLoops</span>,</span>
-<span>files<span class="op">=</span><span class="va">hicFiles</span>,</span>
-<span>binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
-<span>blockSize<span class="op">=</span><span class="fl">100e6</span></span>
+<span>  x<span class="op">=</span><span class="va">mergedLoops</span>,</span>
+<span>  files<span class="op">=</span><span class="va">hicFiles</span>,</span>
+<span>  binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
+<span>  blockSize<span class="op">=</span><span class="fl">100e6</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">pixels</span></span>
 <span><span class="co">#&gt; class: InteractionMatrix </span></span>
@@ -761,7 +778,7 @@ function is what we should use with a <code>binSize</code> of 5 Kb:</p>
 because it returns a single matrix for each interaction and
 <code>.hic</code> file. You can access this matrix with the
 <code>counts()</code> accessor:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">counts</span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;2339 x 12&gt; DelayedMatrix object of type "double":</span></span>
 <span><span class="co">#&gt;          0hr_1_1_chr1.hic  0hr_1_2_chr1.hic ... 72hr_3_1_chr1.hic</span></span>
@@ -792,12 +809,12 @@ because it returns a single matrix for each interaction and
 <p>These counts are stored on-disk in an HDF5 file to conserve R-memory
 usage. But we will talk more about this later. For now, we can create a
 <code>DESeqDataSet</code> and run <code><a href="https://rdrr.io/pkg/DESeq2/man/DESeq.html" class="external-link">DESeq()</a></code>:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/mikelove/DESeq2" class="external-link">DESeq2</a></span><span class="op">)</span></span>
 <span><span class="va">dds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/DESeqDataSet.html" class="external-link">DESeqDataSetFromMatrix</a></span><span class="op">(</span></span>
-<span>countData<span class="op">=</span><span class="fu">counts</span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span>,</span>
-<span>colData<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">colData</a></span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span>, <span class="va">samples</span><span class="op">)</span>,</span>
-<span>design<span class="op">=</span><span class="op">~</span><span class="va">replicate</span><span class="op">+</span><span class="va">condition</span></span>
+<span>  countData<span class="op">=</span><span class="fu">counts</span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span>,</span>
+<span>  colData<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">colData</a></span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span>, <span class="va">samples</span><span class="op">)</span>,</span>
+<span>  design<span class="op">=</span><span class="op">~</span><span class="va">replicate</span><span class="op">+</span><span class="va">condition</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">dds</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/DESeq.html" class="external-link">DESeq</a></span><span class="op">(</span><span class="va">dds</span><span class="op">)</span></span>
 <span><span class="va">dds</span></span>
@@ -811,7 +828,7 @@ usage. But we will talk more about this later. For now, we can create a
 <span><span class="co">#&gt;   72hr_3_2_chr1.hic</span></span>
 <span><span class="co">#&gt; colData names(8): files fileNames ... filepath sizeFactor</span></span></code></pre></div>
 <p>Get shrunken results:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/lfcShrink.html" class="external-link">lfcShrink</a></span><span class="op">(</span><span class="va">dds</span>, coef<span class="op">=</span><span class="st">"condition_treatment_vs_control"</span>, type<span class="op">=</span><span class="st">"apeglm"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -825,18 +842,18 @@ usage. But we will talk more about this later. For now, we can create a
 <span><span class="co">#&gt; [1] see 'cooksCutoff' argument of ?results</span></span>
 <span><span class="co">#&gt; [2] see 'independentFiltering' argument of ?results</span></span></code></pre></div>
 <p>And inspect the results with an MA plot:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/plotMA.html" class="external-link">plotMA</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-18-1.png" width="700"></p>
-<p>or a PCA plot:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/varianceStabilizingTransformation.html" class="external-link">varianceStabilizingTransformation</a></span><span class="op">(</span><span class="va">dds</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/plotPCA.html" class="external-link">plotPCA</a></span><span class="op">(</span>intgroup<span class="op">=</span><span class="st">"condition"</span><span class="op">)</span> <span class="op">+</span></span>
-<span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>aspect.ratio <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/plotMA.html" class="external-link">plotMA</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-19-1.png" width="700"></p>
+<p>or a PCA plot:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/DESeq2/man/varianceStabilizingTransformation.html" class="external-link">varianceStabilizingTransformation</a></span><span class="op">(</span><span class="va">dds</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/BiocGenerics/man/plotPCA.html" class="external-link">plotPCA</a></span><span class="op">(</span>intgroup<span class="op">=</span><span class="st">"condition"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>aspect.ratio <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-20-1.png" width="700"></p>
 <p>We can add these results from <code>DESeq2</code> to our
 <code>InteractionMatrix</code> object.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">rowData</a></span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">res</span></span>
 <span><span class="va">pixels</span></span>
 <span><span class="co">#&gt; class: InteractionMatrix </span></span>
@@ -874,7 +891,7 @@ loci, such as loop anchors or protein binding sites.</p>
 <p>We can use a helper function called <code><a href="http://ericscottdavis.com/mariner/reference/pixelsToMatrices.html" class="external-link">pixelsToMatrices()</a></code>
 to expand square regions around each central pixel.</p>
 <p><img src="img/pixToMat.png" width="10%" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">regions</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pixelsToMatrices.html" class="external-link">pixelsToMatrices</a></span><span class="op">(</span>x<span class="op">=</span><span class="fu">interactions</span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span>, buffer<span class="op">=</span><span class="fl">5</span><span class="op">)</span></span>
 <span><span class="va">regions</span></span>
 <span><span class="co">#&gt; MergedGInteractions object with 2339 interactions and 5 metadata columns:</span></span>
@@ -910,12 +927,12 @@ to expand square regions around each central pixel.</p>
 <p>Then we can use the <code><a href="http://ericscottdavis.com/mariner/reference/pullHicMatrices.html" class="external-link">pullHicMatrices()</a></code> function to
 extract 11 x 11 matrices by setting the <code>binSize</code> to 5
 Kb:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">matrices</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pullHicMatrices.html" class="external-link">pullHicMatrices</a></span><span class="op">(</span></span>
-<span>x<span class="op">=</span><span class="va">regions</span>,</span>
-<span>files<span class="op">=</span><span class="va">hicFiles</span>,</span>
-<span>binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
-<span>blockSize<span class="op">=</span><span class="fl">100e6</span></span>
+<span>  x<span class="op">=</span><span class="va">regions</span>,</span>
+<span>  files<span class="op">=</span><span class="va">hicFiles</span>,</span>
+<span>  binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
+<span>  blockSize<span class="op">=</span><span class="fl">100e6</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">matrices</span></span>
 <span><span class="co">#&gt; class: InteractionArray </span></span>
@@ -933,7 +950,7 @@ Kb:</p>
 similar to the <code>InteractionMatrix</code> object except that it
 contains an array of pixel by Hi-C count matrices that are accessible
 with the <code>counts()</code> accessor:</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">counts</span><span class="op">(</span><span class="va">matrices</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;11 x 11 x 2339 x 12&gt; DelayedArray object of type "double":</span></span>
 <span><span class="co">#&gt; ,,1,0hr_1_1_chr1.hic</span></span>
@@ -966,7 +983,7 @@ interactions, files, or all.</p>
 <p><img src="img/aggMatFigAlt.png" width="75%" style="display: block; margin: auto;"></p>
 <p>Here we will combine all interactions for each Hi-C file by setting
 <code>by="files"</code>:</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">aggMats</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/aggHicMatrices.html" class="external-link">aggHicMatrices</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">matrices</span>, by<span class="op">=</span><span class="st">"files"</span><span class="op">)</span></span>
 <span><span class="va">aggMats</span></span>
 <span><span class="co">#&gt; &lt;11 x 11 x 12&gt; DelayedArray object of type "double":</span></span>
@@ -993,14 +1010,14 @@ argument and see what you get!</p>
 <code><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply()</a></code> functions to do more complex aggregations. Let’s
 combine all the biological and technical replicates for each condition
 (0hr or 72hr).</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ctr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">aggMats</span><span class="op">[</span>,,<span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span>, <span class="va">sum</span>, na.rm<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">trt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">aggMats</span><span class="op">[</span>,,<span class="fl">7</span><span class="op">:</span><span class="fl">12</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">2</span><span class="op">)</span>, <span class="va">sum</span>, na.rm<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>And visualize them with the <code><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix()</a></code> function:</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">ctr</span><span class="op">)</span></span>
 <span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">trt</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-27-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-27-2.png" width="50%"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-28-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-28-2.png" width="50%"></p>
 <p>You’ll notice that there is an artifact in the bottom left-hand
 corner. This is because interactions that are short, or close to the
 diagonal, are being superimposed. The <code><a href="http://ericscottdavis.com/mariner/reference/removeShortPairs.html" class="external-link">removeShortPairs()</a></code>
@@ -1008,7 +1025,7 @@ function can be used upstream of <code><a href="http://ericscottdavis.com/marine
 to remove any part of the regions that would cross the diagonal. The
 following code shows how these functions can be chained to produce APA
 plots without artifacts caused by the Hi-C diagonal.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Remove short pairs &amp; extract counts</span></span>
 <span><span class="va">matrices</span> <span class="op">&lt;-</span></span>
 <span>  <span class="va">regions</span> <span class="op">|&gt;</span></span>
@@ -1025,13 +1042,13 @@ plots without artifacts caused by the Hi-C diagonal.</p>
 <span><span class="co">## Visualize without artifacts</span></span>
 <span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">ctr</span><span class="op">)</span></span>
 <span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">trt</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-28-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-28-2.png" width="50%"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-29-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-29-2.png" width="50%"></p>
 <p>You may notice that there is not much difference between the APA of
 the control vs. treatment because we are aggregating all loops together.
 We can subset the <code>InteractionArray</code> object according to our
 differential looping results to show genome-wide differences that
 support our analysis.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Subset into gained/lost loops</span></span>
 <span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">rowData</a></span><span class="op">(</span><span class="va">matrices</span><span class="op">)</span></span>
 <span><span class="va">gained</span> <span class="op">&lt;-</span> <span class="va">matrices</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;=</span> <span class="fl">0.1</span> <span class="op">&amp;</span> <span class="va">res</span><span class="op">$</span><span class="va">log2FoldChange</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">]</span></span>
@@ -1053,22 +1070,22 @@ support our analysis.</p>
 <span><span class="va">gained_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">gained_ctr</span>, <span class="va">gained_trt</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">lost_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">lost_ctr</span>, <span class="va">lost_trt</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Then we can visualize the gained loops in control and treatment:</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_ctr</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span>
 <span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_trt</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-30-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-30-2.png" width="50%"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-31-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-31-2.png" width="50%"></p>
 <p>And the lost loops in control and treatment:</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">lost_ctr</span>, zrange<span class="op">=</span><span class="va">lost_scale</span><span class="op">)</span></span>
 <span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">lost_trt</span>, zrange<span class="op">=</span><span class="va">lost_scale</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-31-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-31-2.png" width="50%"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-32-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-32-2.png" width="50%"></p>
 <p>In the <a href="vis_with_pg">final section of this workshop</a> we
 will take these plots and visualize them on a single page with
 labels.</p>
 <p><code>mariner</code> includes the <code>calcApa()</code> function,
 which wraps several of these steps together to simply your workflow. For
 example, the code below can be used to accomplish the same task.</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Identify gained/lost loops</span></span>
 <span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">rowData</a></span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span></span>
 <span><span class="va">gained</span> <span class="op">&lt;-</span> <span class="va">pixels</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;=</span> <span class="fl">0.1</span> <span class="op">&amp;</span> <span class="va">res</span><span class="op">$</span><span class="va">log2FoldChange</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">]</span></span>
@@ -1101,15 +1118,15 @@ example, the code below can be used to accomplish the same task.</p>
 <span><span class="va">gained_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">gained_ctr</span>, <span class="va">gained_trt</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">lost_scale</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">lost_ctr</span>, <span class="va">lost_trt</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>Then we can visualize the gained loops in control and treatment:</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_ctr</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span>
 <span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_trt</span>, zrange<span class="op">=</span><span class="va">gained_scale</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-33-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-33-2.png" width="50%"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-34-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-34-2.png" width="50%"></p>
 <p>And the lost loops in control and treatment:</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">lost_ctr</span>, zrange<span class="op">=</span><span class="va">lost_scale</span><span class="op">)</span></span>
 <span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">lost_trt</span>, zrange<span class="op">=</span><span class="va">lost_scale</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-34-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-34-2.png" width="50%"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-35-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-35-2.png" width="50%"></p>
 <p>Running each step separately allows you to have the maximum amount of
 control over the settings which improves efficiency and performance. It
 also gives you more flexibility to allow custom functions that haven’t
@@ -1124,7 +1141,7 @@ encompassed by the differential loops so we can visualize how the
 domains are changing.</p>
 <p>We can build a helper function that makes TAD with a buffer on either
 side from the loops.</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Write a helper function to convert</span></span>
 <span><span class="co">## loops into TADs</span></span>
 <span><span class="va">makeTadsFromLoops</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
@@ -1140,13 +1157,13 @@ side from the loops.</p>
 <span><span class="va">tads</span> <span class="op">&lt;-</span> <span class="fu">makeTadsFromLoops</span><span class="op">(</span><span class="va">mergedLoops</span><span class="op">)</span></span></code></pre></div>
 <p>Then we can filter these tads for those that are gained after 72
 hours of PMA treatment.</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Identify gained TADs</span></span>
 <span><span class="va">gained</span> <span class="op">&lt;-</span> <span class="va">tads</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;=</span> <span class="fl">0.1</span> <span class="op">&amp;</span> <span class="va">res</span><span class="op">$</span><span class="va">log2FoldChange</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
 <p>The <code><a href="http://ericscottdavis.com/mariner/reference/pullHicMatrices.html" class="external-link">pullHicMatrices()</a></code> function can be used to extract
 count matrices for these tads at a given resolution (in this case 5
 Kb).</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Pull TAD regions</span></span>
 <span><span class="va">mats</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pullHicMatrices.html" class="external-link">pullHicMatrices</a></span><span class="op">(</span></span>
 <span>  x<span class="op">=</span><span class="va">gained</span>,</span>
@@ -1159,18 +1176,18 @@ Kb).</p>
 <span><span class="co">#&gt; <span style="color: #0000BB;">ℹ</span> Use `assignToBins()` or `snapToBins()` for more binning options.</span></span></code></pre></div>
 <p>Because each region is a different size, an irregular or jagged array
 object is returned:</p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mats</span></span>
 <span><span class="co">#&gt; class: InteractionJaggedArray</span></span>
 <span><span class="co">#&gt; dim: 24 interaction(s), 6 file(s), variable count matrix(es)</span></span>
 <span><span class="co">#&gt; metadata(3): binSize, norm, matrix</span></span>
 <span><span class="co">#&gt; colData: </span></span>
 <span><span class="co">#&gt; colData names(2): files, fileNames</span></span>
-<span><span class="co">#&gt; HDF5: /tmp/RtmpMYYV5M/file44317b44563.h5</span></span></code></pre></div>
+<span><span class="co">#&gt; HDF5: /tmp/RtmpTEA3c5/file3ed65a59b07.h5</span></span></code></pre></div>
 <p>The <code>counts()</code> function gives access to these count
 matrices, which can be realized with <code><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list()</a></code> if
 needed.</p>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">counts</span><span class="op">(</span><span class="va">mats</span><span class="op">)</span></span>
 <span><span class="co">#&gt; &lt;n x m x 24 x 6&gt; JaggedArray:</span></span>
 <span><span class="co">#&gt; ,,1,1</span></span>
@@ -1199,7 +1216,7 @@ matrix to the rows and column dimensions specified in the
 each matrix to its total signal so that each matrix contributes the same
 relative signal to the aggregation. The result is an
 <code>InteractionArray</code> as we’ve seen in previous sections.</p>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Convert to regular array</span></span>
 <span><span class="va">reg</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/regularize.html" class="external-link">regularize</a></span><span class="op">(</span></span>
 <span>  x<span class="op">=</span><span class="va">mats</span>,</span>
@@ -1209,16 +1226,16 @@ relative signal to the aggregation. The result is an
 <span><span class="op">)</span></span></code></pre></div>
 <p>The regularized array can then be aggregated and visualized like
 before:</p>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Aggregate</span></span>
 <span><span class="va">agg</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/aggHicMatrices.html" class="external-link">aggHicMatrices</a></span><span class="op">(</span><span class="va">reg</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">## Visualize</span></span>
 <span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">agg</span>, zrange<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.025</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-41-1.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-42-1.png" width="700"></p>
 <p>We can use the wrapper function <code><a href="http://ericscottdavis.com/mariner/reference/pileupDomains.html" class="external-link">pileupDomains()</a></code> to carry
 out these steps for us:</p>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Identify gained TADs</span></span>
 <span><span class="va">gained</span> <span class="op">&lt;-</span> <span class="va">tads</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;=</span> <span class="fl">0.1</span> <span class="op">&amp;</span> <span class="va">res</span><span class="op">$</span><span class="va">log2FoldChange</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">]</span></span>
 <span></span>
@@ -1243,7 +1260,7 @@ out these steps for us:</p>
 <span><span class="co">## Visualize</span></span>
 <span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_ctr_tads</span>, zrange<span class="op">=</span><span class="va">gained_tad_scale</span><span class="op">)</span></span>
 <span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_trt_tads</span>, zrange<span class="op">=</span><span class="va">gained_tad_scale</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-42-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-42-2.png" width="50%"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-43-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-43-2.png" width="50%"></p>
 </div>
 </div>
 <div class="section level2">
@@ -1257,16 +1274,16 @@ we will use <code>plotgardener</code> to programmatically place our APA
 plots on a page and add text labels.</p>
 <p>To visualize multiple plots with <code>plotgardener</code> you start
 by creating a page:</p>
-<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://phanstiellab.github.io/plotgardener" class="external-link">plotgardener</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">## Create page</span></span>
 <span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/pageCreate.html" class="external-link">pageCreate</a></span><span class="op">(</span>width<span class="op">=</span><span class="fl">3</span>, height<span class="op">=</span><span class="fl">3</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-44-1.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-45-1.png" width="700"></p>
 <p>We can pass additional parameters to the <code><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix()</a></code>
 function specifying where we would like these to be placed on the
 page.</p>
-<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## APA plots</span></span>
 <span><span class="va">gainedApa</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span></span>
 <span>  data<span class="op">=</span><span class="va">gained_ctr</span>,</span>
@@ -1300,9 +1317,9 @@ page.</p>
 <span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
 <span>  height<span class="op">=</span><span class="fl">0.95</span>,</span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-45-1.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-46-1.png" width="700"></p>
 <p>We can use annotation functions to add scale legends.</p>
-<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## APA heatmap legends</span></span>
 <span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/annoHeatmapLegend.html" class="external-link">annoHeatmapLegend</a></span><span class="op">(</span></span>
 <span>  plot<span class="op">=</span><span class="va">gainedApa</span>,</span>
@@ -1320,9 +1337,9 @@ page.</p>
 <span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
 <span>  height<span class="op">=</span><span class="fl">0.1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-46-1.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-47-1.png" width="700"></p>
 <p>and text labels:</p>
-<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Plot text labels</span></span>
 <span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotText.html" class="external-link">plotText</a></span><span class="op">(</span></span>
 <span>  label<span class="op">=</span><span class="st">"72hr-loops"</span>,</span>
@@ -1350,22 +1367,22 @@ page.</p>
 <span>  rot<span class="op">=</span><span class="fl">90</span>,</span>
 <span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"center"</span>, <span class="st">"bottom"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-47-1.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-48-1.png" width="700"></p>
 <p>When the plot is to your liking, you can remove the guides on the
 page:</p>
-<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/pageGuideHide.html" class="external-link">pageGuideHide</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-48-1.png" width="700"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-48-2.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-49-1.png" width="700"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-49-2.png" width="700"></p>
 <p><code>plotgardener</code> is a very useful tool for making
 publication-quality genomic figures. Visit the <a href="https://phanstiellab.github.io/plotgardener/" class="external-link">website</a> to learn
 more about what you can do with <code>plotgardener</code>.</p>
 <p>For example, we could plot an example loop beside these APA
 plots:</p>
-<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Create page</span></span>
 <span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/pageCreate.html" class="external-link">pageCreate</a></span><span class="op">(</span>width<span class="op">=</span><span class="fl">6</span>, height<span class="op">=</span><span class="fl">3</span>, showGuides<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-49-1.png" width="700"></p>
-<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-50-1.png" width="700"></p>
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co">## APA plots</span></span>
 <span><span class="va">gainedApa</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span></span>
@@ -1528,7 +1545,7 @@ plots:</p>
 <span>  y<span class="op">=</span><span class="fl">2.45</span>,</span>
 <span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"right"</span>, <span class="st">"bottom"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-49-2.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-50-2.png" width="700"></p>
 </div>
   </div>
 
