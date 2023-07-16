@@ -27,7 +27,8 @@ Suggests:
     ggplot2,
     mariner,
     fields,
-    plotgardener
+    plotgardener,
+    UpSetR
 URL: https://ericsdavis.github.io/Bioc2023mariner/
 BugReports: https://github.com/ericsdavis/Bioc2023mariner/issues/new/choose
 VignetteBuilder: knitr

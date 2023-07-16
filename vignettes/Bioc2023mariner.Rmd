@@ -284,12 +284,31 @@ Finally, we can subset these interactions by the source file
 using the `sets()` function. This function includes
 optional parameters, `include` and `exclude`, which control which
 sources should be grouped in the output. By default a list of
-`MergedGInteractions` objects is returned for each source with
-interactions that belong exclusively to that source.
+`MergedGInteractions` objects is returned that contains the set
+of interactions belonging to each combination of sources.
 
 ```{r}
 sets(x=mergedLoops) |>
   lapply(summary)
+```
+
+We can visualize these sets with an `UpSet` plot:
+
+```{r}
+library(UpSetR)
+
+## Count loops in each set
+loopSets <- 
+  sets(x=mergedLoops) |>
+  lapply(length)
+
+## Convert to an expression set for UpSetR
+loopSets <-
+  setNames(loopSets, gsub("_", "&", names(loopSets))) |>
+  fromExpression()
+
+## Visualize
+upset(loopSets, order.by="freq")
 ```
 
 If we want to find loops that form _de_ _novo_ after 72 hours
@@ -345,7 +364,7 @@ unnormlized contact frequency between interactions for each
 Hi-C sample. First we read in the sample sheet containing
 Hi-C sample information and file paths each `.hic` file:
   
-  ```{r}
+```{r}
 samples <- read.table("data/samples/samplesheet.txt", header=TRUE, colClasses="factor")
 samples <- as(samples, "DataFrame")
 samples
@@ -355,7 +374,7 @@ Since we want a count matrix with a single value for
 each 5 Kb loop pixel and `.hic` file, the `pullHicPixels()`
 function is what we should use with a `binSize` of 5 Kb:
   
-  ```{r}
+```{r}
 ## Hi-C file paths from samplesheet
 hicFiles <- as.character(samples$filepath)
 
@@ -374,7 +393,7 @@ because it returns a single matrix for each interaction
 and `.hic` file. You can access this matrix with the
 `counts()` accessor:
   
-  ```{r}
+```{r}
 counts(pixels)
 ```
 
@@ -387,7 +406,7 @@ conserve R-memory usage. But we will talk more about
 this later. For now, we can create a `DESeqDataSet` and
 run `DESeq()`:
   
-  ```{r, message=FALSE}
+```{r, message=FALSE}
 library(DESeq2)
 dds <- DESeqDataSetFromMatrix(
   countData=counts(pixels),
@@ -400,19 +419,19 @@ dds
 
 Get shrunken results:
   
-  ```{r, message=FALSE}
+```{r, message=FALSE}
 res <- lfcShrink(dds, coef="condition_treatment_vs_control", type="apeglm")
 summary(res)
 ```
 And inspect the results with an MA plot:
   
-  ```{r}
+```{r}
 plotMA(res)
 ```
 
 or a PCA plot:
   
-  ```{r}
+```{r}
 varianceStabilizingTransformation(dds) |>
   plotPCA(intgroup="condition") +
   ggplot2::theme(aspect.ratio = 1)
@@ -476,7 +495,7 @@ regions
 Then we can use the `pullHicMatrices()` function to extract
 11 x 11 matrices by setting the `binSize` to 5 Kb:
   
-  ```{r}
+```{r}
 matrices <- pullHicMatrices(
   x=regions,
   files=hicFiles,
@@ -491,7 +510,7 @@ similar to the `InteractionMatrix` object except that it
 contains an array of pixel by Hi-C count matrices that
 are accessible with the `counts()` accessor:
   
-  ```{r}
+```{r}
 counts(matrices)
 ```
 
@@ -541,7 +560,7 @@ trt <- apply(aggMats[,,7:12], c(1,2), sum, na.rm=TRUE)
 
 And visualize them with the `plotMatrix()` function:
   
-  ```{r, message=FALSE, fig.show="hold", out.width="50%"}
+```{r, message=FALSE, fig.show="hold", out.width="50%"}
 plotMatrix(ctr)
 plotMatrix(trt)
 ```
@@ -731,7 +750,7 @@ mats <- pullHicMatrices(
 Because each region is a different size, an
 irregular or jagged array object is returned:
   
-  ```{r}
+```{r}
 mats
 ```
 

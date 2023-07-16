@@ -5,6 +5,7 @@ RUN R -e "remotes::install_github('EricSDavis/mariner@dev', dependencies=TRUE)"
 RUN R -e "BiocManager::install(c('DESeq2'))"
 RUN R -e "remotes::install_github('azhu513/apeglm')"
 RUN R -e "install.packages('aws.s3')"
+RUN R -e "install.packages('UpSetR')"
 
 # Set working directory
 WORKDIR /home/rstudio/
