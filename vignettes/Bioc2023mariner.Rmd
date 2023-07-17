@@ -4,6 +4,8 @@ author: "Eric S. Davis, Sarah M. Parker, Manjari Kiran, \
 Nicole Kramer, Douglas H. Phanstiel"
 date: '`r Sys.Date()`'
 output: rmarkdown::html_vignette
+bibliography: references.bib
+link-citations: true
 vignette: >
   %\VignetteIndexEntry{Mariner: Explore the Hi-Cs}
   %\VignetteEngine{knitr::rmarkdown}
@@ -55,12 +57,28 @@ for(f in files) {
 
 ### Description
 
-TODO Add description of workshop here...
+3D chromatin structure plays an integral, yet incompletely
+understood role in the long-distance regulation of genes by
+enhancers and repressors. Disruption or aberrant formation of
+these long-range interactions can result in developmental
+abnormalities and diseases, such as cancer. Therefore, deriving
+biological insights from 3D chromatin structure experiments,
+such as Hi-C or Micro-C, is essential for understanding and
+correcting human disease.
 
+In this workshop, we will use a recently published dataset 
+[@Bond2022.10.31.514600] exploring chromatin loop dynamics
+during a megakaryocyte differentiation event to demonstrate a
+differential looping analysis with `mariner`, `DESeq2`, and
+`plotgardener`. Specifically, we will show how `mariner` can
+be used to merge redundant loop calls and extract Hi-C contact
+frequency between putative loop anchors to use with `DESeq2` to
+identify differential loops. We will then conduct pileup analyses
+of Hi-C pixels, domains, and boundaries with `mariner`. Finally,
+we will demonstrate how these analyses can be visualized together
+in a publication-ready multi-panel figure with `plotgardener`.
 
 ### Pre-requisites
-
-List any workshop prerequisites, for example:
 
 * Basic knowledge of R syntax
 * Familiarity with the `GenomicRanges` and `InteractionSet` classes
@@ -68,23 +86,23 @@ List any workshop prerequisites, for example:
 ### Optional background reading
 
 * Biological background
-  * TODO Hi-C background
-  * TODO MEGA paper
+  * Hi-C background [@rao_3d_2014]
+  * Dataset used in workshop [@Bond2022.10.31.514600]
 * Other _Bioconductor_ packages
-  * TODO `InteractionSet`
-  * TODO `DelayedArray`
-  * TODO `DESeq2`
-  * TODO `plotgardener`
+  * `InteractionSet` [@InteractionSet]
+  * `DelayedArray` [@DelayedArray]
+  * `DESeq2` [@DESeq2; @apeglm]
+  * `plotgardener` [@plotgardener]
 
 ### Participation
 
 The format is lecture + lab, with time for data exploration.
 
-### _R_ / _Bioconductor_ packages used
+### Major _R_ / _Bioconductor_ packages used
 
-* mariner
-* DESeq2
-* plotgardener
+* `mariner`
+* `DESeq2`
+* `plotgardener`
 
 ### Time outline
 
@@ -102,8 +120,6 @@ The format is lecture + lab, with time for data exploration.
 ### Workshop goals and objectives
 
 ### Learning goals
-
-Some examples:
 
 * Understand how to work with interaction data in R.
 * Learn which `mariner` functions to use for extracting
@@ -128,8 +144,7 @@ programmatically visualizing genomic data.
 * *anchors*: the genomic loci (genomic ranges) that make
 up an _interaction_.
 
-* *interactions*: a pair of genomic loci (genomic ranges)
-that may be in contact.
+* *interactions*: a pair of genomic loci (genomic ranges).
 
 * *pixel*: a two-dimensional bin that represents
 the _interaction_ between two fixed-width genomic loci.
@@ -138,8 +153,8 @@ the _interaction_ between two fixed-width genomic loci.
 to a pixel.
 
 * *loop*: a _pixel_ that is enriched for _contact frequency_
-compared to its local background. Biologically, a loop
-represents a point of frequent of sustained contact between
+compared to its local background. Biologically, a _loop_
+represents a point of frequent or sustained contact between
 genomic loci.
 
 * *the diagonal*: points of self-interaction along the Hi-C
@@ -155,7 +170,7 @@ is greater than the second _anchor_ appear here.
 
 * *resolution*: the ability to distinguish between two
 neighboring points on a Hi-C matrix. The higher the
-_resolution_ the more accurate the contact between
+_resolution_ the more precise the contact between
 pairs of loci.
 
 * *binSize*: Hi-C reads are quantified along the genome
@@ -169,14 +184,59 @@ _resolutions_).
 
 ## Workshop datasets
 
-TODO
+The dataset used in this workshop comes from one of our
+recently accepted papers, led by the talented Marielle
+Bond, where we explore chromatin loop dynamics during
+megakaryocyte differentiation [@Bond2022.10.31.514600].
+In short, deeply sequenced Hi-C was conducted in K562 cells
+before and after treatment with PMA for 0, 6, or 72 hours.
+RNA-seq, ATAC-seq, and CUT&RUN for H3K27ac was also performed
+at each timepoint, but will not be used in this workshop.
 
-Topics to cover:
-  
-* Biological question (megakaryocyte differentiation)
-* Hi-C files & replicate structure
-* Loop & TAD files
-* ATAC peaks & signal tracks
+```{r, fig.align='center', out.width='75%', echo=FALSE}
+knitr::include_graphics("img/mega_slide.png")
+```
+
+The Hi-C data in this study was processed using a modified
+version of the `Juicer` pipeline [@durand_juicer_2016; 
+@eric_davis_2022_7514346] resulting in `.hic` files for each
+biological and technical replicate. Loops were identified
+using [`SIP`](https://github.com/PouletAxel/SIP) [@Rowley01032020]
+for each timepoint.
+
+Since the full dataset is very large, we will be working with
+a subset of these data in the workshop. We will use 6 Hi-C
+replicates (ignoring biological/technical designations) for the
+control (0 hours of PMA) and 6 replicates for the treatment
+(72 hours of PMA). The `.hic` files and loop files have been
+filtered to only contain reads from the first chromosome
+of the human hg38 genome build.
+
+The following shows the directory structure of the files
+used in this workshop:
+
+```bash
+vignettes/data/
+├── hic
+│   ├── "0hr_1_1_chr1.hic"
+│   ├── "0hr_1_2_chr1.hic"
+│   ├── "0hr_2_1_chr1.hic"
+│   ├── "0hr_2_2_chr1.hic"
+│   ├── "0hr_3_1_chr1.hic"
+│   ├── "0hr_3_2_chr1.hic"
+│   ├── "72hr_1_1_chr1.hic"
+│   ├── "72hr_1_2_chr1.hic"
+│   ├── "72hr_2_1_chr1.hic"
+│   ├── "72hr_2_2_chr1.hic"
+│   ├── "72hr_3_1_chr1.hic"
+│   └── "72hr_3_2_chr1.hic"
+├── loops
+│   ├── "0hr_5kbLoops_chr1.txt"
+│   ├── "6hr_5kbLoops_chr1.txt"
+│   └── "72hr_5kbLoops_chr1.txt"
+└── samples
+    └── "samplesheet.txt"
+```
 
 ## Differential analysis with `DESeq2`
 
@@ -641,7 +701,7 @@ plotMatrix(lost_trt, zrange=lost_scale)
 In the [final section of this workshop](vis_with_pg) we will take
 these plots and visualize them on a single page with labels.
 
-`mariner` includes the `calcApa()` function, which wraps several
+`mariner` includes the `pileupPixels()` function, which wraps several
 of these steps together to simply your workflow. For example,
 the code below can be used to accomplish the same task.
 
@@ -1121,3 +1181,4 @@ plotText(
 )
 ```
 
+## References
