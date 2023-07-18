@@ -885,6 +885,81 @@ plotMatrix(gained_ctr_tads, zrange=gained_tad_scale)
 plotMatrix(gained_trt_tads, zrange=gained_tad_scale)
 ```
 
+### Aggregating at loop boundaries
+
+In the previous sections, we aggregated Hi-C data with a
+focal point on loop pixels and domains. In this section we
+will use the `pilupBoundaries()` function to aggregate regions
+centered on loop anchors. This function takes a `GRanges` or
+`GInteractions` object, collects the unique anchors (if interactions
+are supplied), resizes around a specified `width`, and extracts
+then aggregates the region into a single matrix. Since many of these
+steps are shared in the analyses covered by the previous sections,
+we will skip directly to using the wrapper function `pileupBoundaries()`.
+
+First, we can identify gained interactions to supply some
+boundary elements (i.e. loop anchors) to aggregate.
+
+```{r}
+## Identify gained/lost loops
+res <- rowData(pixels)
+gained <- pixels[which(res$padj <= 0.1 & res$log2FoldChange > 0)]
+```
+
+Then we can use the `pileupBoundaries()` function to aggregate
+a 500 Kb region around the loop anchors:
+
+```{r, message=FALSE, warning=FALSE}
+gained_ctr_bound <- pileupBoundaries(
+  x=interactions(gained),
+  files=hicFiles[1:6],
+  binSize=5e3,
+  normalize=TRUE
+)
+gained_trt_bound <- pileupBoundaries(
+  x=interactions(gained),
+  files=hicFiles[7:12],
+  binSize=5e3,
+  normalize=TRUE
+)
+```
+
+We can define a common scale:
+
+```{R}
+gained_bound_scale <- 
+  c(0, quantile(x=c(gained_ctr_bound, gained_trt_bound), 0.90))
+```
+
+And then visualize the results:
+
+```{r, message=FALSE, warning=FALSE, fig.show="hold", out.width="50%"}
+plotMatrix(gained_ctr_bound, zrange=gained_bound_scale)
+plotMatrix(gained_trt_bound, zrange=gained_bound_scale)
+```
+
+
+We can also divide these matrices to visualize the 
+change in boundaries between two conditions:
+
+```{r, message=FALSE, warning=FALSE}
+## Divide matrices
+diffBoundaries <- gained_trt_bound/gained_ctr_bound
+
+## Get the range of data
+dataRange <- range(diffBoundaries)
+
+## Create a color palette
+colPal <- colorRampPalette(c('blue', 'white', 'red'))
+                           
+## Visualize         
+plotMatrix(
+  data=diffBoundaries,
+  zrange=dataRange,
+  palette=colPal
+)
+```
+
 ## Visualizing with `plotgardener` <a id="vis_with_pg" />
 
 `plotgardener` is a genomic data visualization package for R.
