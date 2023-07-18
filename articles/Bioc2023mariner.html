@@ -70,7 +70,7 @@
                         <h4 data-toc-skip class="author">Eric S. Davis,
 Sarah M. Parker, Manjari Kiran, Nicole Kramer, Douglas H. Phanstiel</h4>
             
-            <h4 data-toc-skip class="date">2023-07-17</h4>
+            <h4 data-toc-skip class="date">2023-07-18</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/ericsdavis/Bioc2023mariner/blob/HEAD/vignettes/Bioc2023mariner.Rmd" class="external-link"><code>vignettes/Bioc2023mariner.Rmd</code></a></small>
       <div class="hidden name"><code>Bioc2023mariner.Rmd</code></div>
@@ -1244,7 +1244,7 @@ object is returned:</p>
 <span><span class="co">#&gt; metadata(3): binSize, norm, matrix</span></span>
 <span><span class="co">#&gt; colData: </span></span>
 <span><span class="co">#&gt; colData names(2): files, fileNames</span></span>
-<span><span class="co">#&gt; HDF5: /tmp/RtmpFKsiBS/file4144874e33e.h5</span></span></code></pre></div>
+<span><span class="co">#&gt; HDF5: /tmp/Rtmp4QHkNP/file44333ed4394.h5</span></span></code></pre></div>
 <p>The <code>counts()</code> function gives access to these count
 matrices, which can be realized with <code><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list()</a></code> if
 needed.</p>
@@ -1323,6 +1323,69 @@ out these steps for us:</p>
 <span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_trt_tads</span>, zrange<span class="op">=</span><span class="va">gained_tad_scale</span><span class="op">)</span></span></code></pre></div>
 <p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-44-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-44-2.png" width="50%"></p>
 </div>
+<div class="section level3">
+<h3 id="aggregating-at-loop-boundaries">Aggregating at loop boundaries<a class="anchor" aria-label="anchor" href="#aggregating-at-loop-boundaries"></a>
+</h3>
+<p>In the previous sections, we aggregated Hi-C data with a focal point
+on loop pixels and domains. In this section we will use the
+<code>pilupBoundaries()</code> function to aggregate regions centered on
+loop anchors. This function takes a <code>GRanges</code> or
+<code>GInteractions</code> object, collects the unique anchors (if
+interactions are supplied), resizes around a specified
+<code>width</code>, and extracts then aggregates the region into a
+single matrix. Since many of these steps are shared in the analyses
+covered by the previous sections, we will skip directly to using the
+wrapper function <code><a href="http://ericscottdavis.com/mariner/reference/pileupBoundaries.html" class="external-link">pileupBoundaries()</a></code>.</p>
+<p>First, we can identify gained interactions to supply some boundary
+elements (i.e. loop anchors) to aggregate.</p>
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Identify gained/lost loops</span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">rowData</a></span><span class="op">(</span><span class="va">pixels</span><span class="op">)</span></span>
+<span><span class="va">gained</span> <span class="op">&lt;-</span> <span class="va">pixels</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">padj</span> <span class="op">&lt;=</span> <span class="fl">0.1</span> <span class="op">&amp;</span> <span class="va">res</span><span class="op">$</span><span class="va">log2FoldChange</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<p>Then we can use the <code><a href="http://ericscottdavis.com/mariner/reference/pileupBoundaries.html" class="external-link">pileupBoundaries()</a></code> function to
+aggregate a 500 Kb region around the loop anchors:</p>
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">gained_ctr_bound</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pileupBoundaries.html" class="external-link">pileupBoundaries</a></span><span class="op">(</span></span>
+<span>  x<span class="op">=</span><span class="fu">interactions</span><span class="op">(</span><span class="va">gained</span><span class="op">)</span>,</span>
+<span>  files<span class="op">=</span><span class="va">hicFiles</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span>,</span>
+<span>  binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
+<span>  normalize<span class="op">=</span><span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">gained_trt_bound</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/pileupBoundaries.html" class="external-link">pileupBoundaries</a></span><span class="op">(</span></span>
+<span>  x<span class="op">=</span><span class="fu">interactions</span><span class="op">(</span><span class="va">gained</span><span class="op">)</span>,</span>
+<span>  files<span class="op">=</span><span class="va">hicFiles</span><span class="op">[</span><span class="fl">7</span><span class="op">:</span><span class="fl">12</span><span class="op">]</span>,</span>
+<span>  binSize<span class="op">=</span><span class="fl">5e3</span>,</span>
+<span>  normalize<span class="op">=</span><span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>We can define a common scale:</p>
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">gained_bound_scale</span> <span class="op">&lt;-</span> </span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span>x<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">gained_ctr_bound</span>, <span class="va">gained_trt_bound</span><span class="op">)</span>, <span class="fl">0.90</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>And then visualize the results:</p>
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_ctr_bound</span>, zrange<span class="op">=</span><span class="va">gained_bound_scale</span><span class="op">)</span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span><span class="va">gained_trt_bound</span>, zrange<span class="op">=</span><span class="va">gained_bound_scale</span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-48-1.png" width="50%"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-48-2.png" width="50%"></p>
+<p>We can also divide these matrices to visualize the change in
+boundaries between two conditions:</p>
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## Divide matrices</span></span>
+<span><span class="va">diffBoundaries</span> <span class="op">&lt;-</span> <span class="va">gained_trt_bound</span><span class="op">/</span><span class="va">gained_ctr_bound</span></span>
+<span></span>
+<span><span class="co">## Get the range of data</span></span>
+<span><span class="va">dataRange</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/range.html" class="external-link">range</a></span><span class="op">(</span><span class="va">diffBoundaries</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Create a color palette</span></span>
+<span><span class="va">colPal</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/colorRamp.html" class="external-link">colorRampPalette</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'blue'</span>, <span class="st">'white'</span>, <span class="st">'red'</span><span class="op">)</span><span class="op">)</span></span>
+<span>                           </span>
+<span><span class="co">## Visualize         </span></span>
+<span><span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span></span>
+<span>  data<span class="op">=</span><span class="va">diffBoundaries</span>,</span>
+<span>  zrange<span class="op">=</span><span class="va">dataRange</span>,</span>
+<span>  palette<span class="op">=</span><span class="va">colPal</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-49-1.png" width="700"></p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="visualizing-with-plotgardener">Visualizing with <code>plotgardener</code>
@@ -1335,16 +1398,16 @@ we will use <code>plotgardener</code> to programmatically place our APA
 plots on a page and add text labels.</p>
 <p>To visualize multiple plots with <code>plotgardener</code> you start
 by creating a page:</p>
-<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://phanstiellab.github.io/plotgardener" class="external-link">plotgardener</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">## Create page</span></span>
 <span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/pageCreate.html" class="external-link">pageCreate</a></span><span class="op">(</span>width<span class="op">=</span><span class="fl">3</span>, height<span class="op">=</span><span class="fl">3</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-46-1.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-51-1.png" width="700"></p>
 <p>We can pass additional parameters to the <code><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix()</a></code>
 function specifying where we would like these to be placed on the
 page.</p>
-<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## APA plots</span></span>
 <span><span class="va">gainedApa</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span></span>
 <span>  data<span class="op">=</span><span class="va">gained_ctr</span>,</span>
@@ -1378,9 +1441,9 @@ page.</p>
 <span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
 <span>  height<span class="op">=</span><span class="fl">0.95</span>,</span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-47-1.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-52-1.png" width="700"></p>
 <p>We can use annotation functions to add scale legends.</p>
-<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## APA heatmap legends</span></span>
 <span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/annoHeatmapLegend.html" class="external-link">annoHeatmapLegend</a></span><span class="op">(</span></span>
 <span>  plot<span class="op">=</span><span class="va">gainedApa</span>,</span>
@@ -1398,9 +1461,9 @@ page.</p>
 <span>  width<span class="op">=</span><span class="fl">0.95</span>,</span>
 <span>  height<span class="op">=</span><span class="fl">0.1</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-48-1.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-53-1.png" width="700"></p>
 <p>and text labels:</p>
-<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Plot text labels</span></span>
 <span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/plotText.html" class="external-link">plotText</a></span><span class="op">(</span></span>
 <span>  label<span class="op">=</span><span class="st">"72hr-loops"</span>,</span>
@@ -1428,22 +1491,22 @@ page.</p>
 <span>  rot<span class="op">=</span><span class="fl">90</span>,</span>
 <span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"center"</span>, <span class="st">"bottom"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-49-1.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-54-1.png" width="700"></p>
 <p>When the plot is to your liking, you can remove the guides on the
 page:</p>
-<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/pageGuideHide.html" class="external-link">pageGuideHide</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-50-1.png" width="700"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-50-2.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-55-1.png" width="700"><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-55-2.png" width="700"></p>
 <p><code>plotgardener</code> is a very useful tool for making
 publication-quality genomic figures. Visit the <a href="https://phanstiellab.github.io/plotgardener/" class="external-link">website</a> to learn
 more about what you can do with <code>plotgardener</code>.</p>
 <p>For example, we could plot an example loop beside these APA
 plots:</p>
-<div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## Create page</span></span>
 <span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/pageCreate.html" class="external-link">pageCreate</a></span><span class="op">(</span>width<span class="op">=</span><span class="fl">6</span>, height<span class="op">=</span><span class="fl">3</span>, showGuides<span class="op">=</span><span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-51-1.png" width="700"></p>
-<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-56-1.png" width="700"></p>
+<div class="sourceCode" id="cb52"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co">## APA plots</span></span>
 <span><span class="va">gainedApa</span> <span class="op">&lt;-</span> <span class="fu"><a href="http://ericscottdavis.com/mariner/reference/plotMatrix.html" class="external-link">plotMatrix</a></span><span class="op">(</span></span>
@@ -1606,7 +1669,7 @@ plots:</p>
 <span>  y<span class="op">=</span><span class="fl">2.45</span>,</span>
 <span>  just<span class="op">=</span><span class="fu"><a href="https://phanstiellab.github.io/plotgardener/reference/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"right"</span>, <span class="st">"bottom"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-51-2.png" width="700"></p>
+<p><img src="Bioc2023mariner_files/figure-html/unnamed-chunk-56-2.png" width="700"></p>
 </div>
 <div class="section level2 unnumbered">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
